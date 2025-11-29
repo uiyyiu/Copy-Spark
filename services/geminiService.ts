@@ -128,7 +128,8 @@ export async function generateLessonIdeas(
             },
         });
 
-        const jsonText = (response.text || "").trim();
+        const responseText = response.text;
+        const jsonText = (responseText || "").trim();
         const parsedData = JSON.parse(jsonText || "{}");
         
         // Construct legacy explanation for backward compatibility
@@ -189,7 +190,8 @@ export async function generateGameIdeas(count: string, place: string, tools: str
             config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.9 }
         });
 
-        const json = JSON.parse(response.text || "{}");
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
         return json.games || [];
     } catch (e) {
         throw new Error("فشل في توليد الألعاب");
@@ -209,7 +211,8 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
             config: { systemInstruction: systemInstruction + "\nContext: You are a helpful assistant answering questions about Coptic Orthodox theology and history in Arabic. Use the provided references context." + referencesContext, temperature: 0.3 },
         });
 
-        return (response.text || "").trim();
+        const responseText = response.text;
+        return (responseText || "").trim();
     } catch (error) {
         throw new Error("Connection failed.");
     }
@@ -236,7 +239,8 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
             config: { systemInstruction: systemPrompt, temperature: 0.5 },
         });
 
-        return (response.text || "").trim();
+        const responseText = response.text;
+        return (responseText || "").trim();
     } catch (error) {
         console.error("Error in chatWithExplanation:", error);
         throw new Error("Failed to generate response.");
@@ -260,7 +264,8 @@ export async function generateAlternativeIdea(
             contents: requestContents,
             config: { temperature: 0.95 }
         });
-        return (response.text || "").trim();
+        const responseText = response.text;
+        return (responseText || "").trim();
     } catch (error) {
         throw new Error("Failed to generate alternative.");
     }
@@ -273,7 +278,8 @@ export async function explainIdea(ideaText: string, ageGroup: AgeGroup): Promise
             contents: `Explain how to implement this idea in Arabic: "${ideaText}" for age group "${ageGroup}".`,
             config: { temperature: 0.6 }
         });
-        return (response.text || "").trim();
+        const responseText = response.text;
+        return (responseText || "").trim();
     } catch (error) {
         throw new Error("Failed to explain idea.");
     }
@@ -286,7 +292,8 @@ export async function generateSuggestedQuestions(lessonExplanation: string): Pro
             contents: `Based on this explanation, generate 3 short follow-up questions in Arabic. Explanation: ${lessonExplanation}`,
             config: { responseMimeType: "application/json", responseSchema: {type: Type.OBJECT, properties: {questions: {type: Type.ARRAY, items: {type: Type.STRING}}}, required: ["questions"]} }
         });
-        const json = JSON.parse(response.text || "{}");
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
         return json.questions || [];
     } catch (error) { return []; }
 }
@@ -322,7 +329,8 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             }
         });
         
-        const json = JSON.parse(response.text || "{}");
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
         return json.suggestions || [];
     } catch (error) {
         console.error("Error fetching suggestions:", error);
@@ -382,9 +390,9 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
             }
         });
 
-        const text = response.text || "";
+        const responseText = response.text || "";
         const verses: BibleVerse[] = [];
-        const lines = text.split('\n');
+        const lines = responseText.split('\n');
         
         // Robust State Machine Parser
         // Handles: 
@@ -434,10 +442,10 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
 
         // Fallback: If regex failed completely (verses is empty but text exists), 
         // it might be a block of text without numbers.
-        if (verses.length === 0 && text.length > 50) {
+        if (verses.length === 0 && responseText.length > 50) {
              // Split by periods or reasonable chunks? Or just return as Verse 1?
              // Better to return as Verse 1 than nothing.
-             verses.push({ number: 1, text: text.trim() });
+             verses.push({ number: 1, text: responseText.trim() });
         }
 
         bibleCache.set(cacheKey, verses);
@@ -514,7 +522,8 @@ export async function getLinguisticAnalysis(bookName: string, chapter: number, t
             }
         });
 
-        const json = JSON.parse(response.text || "{}");
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
         const results = json.analysis || [];
         linguisticAnalysisCache.set(cacheKey, results);
         return results;
@@ -572,7 +581,8 @@ export async function getChapterInterpretation(bookName: string, chapter: number
             }
         });
 
-        const text = (response.text || "").trim();
+        const responseText = response.text;
+        const text = (responseText || "").trim();
         interpretationCache.set(cacheKey, text);
         return text;
 
@@ -627,7 +637,8 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
             }
         });
 
-        const text = (response.text || "").trim();
+        const responseText = response.text;
+        const text = (responseText || "").trim();
         simplifiedExplanationCache.set(cacheKey, text);
         return text;
 
@@ -677,7 +688,8 @@ export async function getManuscriptImage(bookName: string, chapter: number): Pro
             }
         });
         
-        const json = JSON.parse(response.text || "{}");
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
         
         return {
             imageUrl: "https://www.codexsinaiticus.org/images/home_slider/Codex_Sinaiticus_01.jpg", // Static representative
