@@ -1,0 +1,194 @@
+/*
+  SPARK TYPOGRAPHY SYSTEM
+  -----------------------
+
+  ### 1. الفلسفة التصميمية (Philosophy)
+
+  نظام الخطوط هذا مصمم لتحقيق ثلاثة أهداف رئيسية:
+  1.  **الوضوح الهرمي (Hierarchy):** تمكين المستخدم من تمييز العناصر المهمة بصريًا، من العناوين الرئيسية إلى النصوص الصغيرة، مما يسهل استيعاب المعلومات.
+  2.  **المقروئية (Readability):** ضمان أن تكون النصوص، خاصة الطويلة منها مثل شروحات الدروس، سهلة القراءة ومريحة للعين على جميع الأجهزة.
+  3.  **الإيقاع البصري (Visual Rhythm):** خلق تناسق واتساق في المسافات وأحجام الخطوط، مما يمنح الواجهة مظهرًا احترافيًا ومنظمًا.
+
+  ### 2. مقياس المسافات (Spacing Scale)
+
+  نعتمد على مقياس 4px (4px Grid). هذا يعني أن جميع المسافات الرأسية (margins, paddings) هي من مضاعفات العدد 4. هذا الأسلوب يوفر مرونة كافية للتصميم مع الحفاظ على التناسق البصري.
+
+  ### 3. إرشادات RTL للغة العربية
+
+  - **المحاذاة:** النصوص الطويلة (Body) تبدأ دائمًا من اليمين. العناوين يمكن أن تكون في المنتصف إذا كان ذلك يخدم التصميم.
+  - **المسافات:** تضاف مسافة علوية (margin-block-start) أكبر من السفلية للعناوين لفصلها عن المحتوى السابق وربطها بالمحتوى التالي لها.
+  - **النماذج (Forms):** عناوين الحقول (Labels) تكون فوق الحقل ومحاذية لليمين.
+  - **قص النصوص (Truncation):** يتم استخدام `text-overflow: ellipsis` للنصوص التي قد تتجاوز سطرًا واحدًا في مساحات محدودة.
+
+  ### 4. الوصولية (Accessibility)
+
+  - **التباين:** تم اختيار الألوان لضمان تحقيق تباين لا يقل عن 4.5:1 للنصوص العادية، وفقًا لمعايير WCAG 2.1 AA.
+  - **الحجم الأدنى:** أصغر حجم خط مستخدم (13px للـ Caption) يعتبر مقروءًا في معظم الحالات، ولكن يجب التأكد من وضوحه في سياقه.
+*/
+
+/*
+  UI TOKENS / CSS VARIABLES
+*/
+:root {
+  /* Font Families */
+  --font-family-primary: 'Cairo', sans-serif;
+  --font-family-serif: 'Noto Naskh Arabic', serif;
+
+  /* Font Sizes */
+  --font-size-h1: 22px;
+  --font-size-h2: 18px;
+  --font-size-body: 16px;
+  --font-size-caption: 13px;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-default: 1.6;
+  --line-height-heading: 1.4;
+}
+
+/* Responsive Scaling */
+@media (min-width: 768px) {
+  :root {
+    --font-size-h1: 32px;
+    --font-size-h2: 24px;
+    /* Body and Caption sizes remain consistent for readability */
+  }
+}
+
+/*
+  BASE STYLES
+*/
+body {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-default);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+  TYPOGRAPHY CLASSES
+*/
+
+/* Titles */
+.spark-h1, .spark-h2, .spark-h3 {
+  font-family: var(--font-family-primary);
+  line-height: var(--line-height-heading);
+  margin-block-start: 1.5rem;
+  margin-block-end: 0.5rem;
+}
+
+.spark-h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.5px;
+}
+
+.spark-h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+}
+
+.spark-h3 {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Reset margin for headings inside cards for better composition */
+.spark-card__header > .spark-h1:first-child,
+.spark-card__header > .spark-h2:first-child,
+.spark-card__header > .spark-h3:first-child {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+
+/* Body Text */
+.spark-body {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-default);
+}
+
+/* Body text with serif font for long-form reading */
+.spark-body-serif {
+  font-family: var(--font-family-serif);
+  font-size: 19px; /* Slightly larger for serif readability */
+  line-height: 1.9;
+  font-weight: var(--font-weight-regular);
+  color: var(--text-light-primary);
+}
+
+
+/* Caption & Tips */
+.spark-caption {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-default);
+}
+
+/* Formatted Content styles for parsed explanations */
+.formatted-content p,
+.formatted-content li {
+    color: var(--text-light-primary);
+}
+
+.formatted-content p {
+    margin-bottom: 1rem;
+}
+
+.formatted-content h4 {
+    font-family: var(--font-family-primary);
+    font-size: 1.1em;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-light-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.formatted-content h4:first-child {
+    margin-top: 0;
+}
+
+.formatted-content ul,
+.formatted-content ol {
+    margin-bottom: 1rem;
+    padding-right: 2rem;
+}
+
+.formatted-content li {
+    margin-bottom: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.formatted-content ul {
+    list-style-type: '• ';
+}
+
+.formatted-content ol {
+    list-style-type: decimal;
+}
+
+.formatted-content .quote {
+  color: #ca8a04; /* text-yellow-600 */
+  font-style: normal;
+  font-weight: 600;
+}
+
+.dark .formatted-content .quote {
+  color: #facc15; /* dark:text-yellow-400 */
+}
+
+.formatted-content .verse {
+  color: #0369a1; /* text-sky-600 */
+  font-weight: 700;
+}
+
+.dark .formatted-content .verse {
+  color: #38bdf8; /* dark:text-sky-400 */
+}

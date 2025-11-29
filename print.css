@@ -1,0 +1,97 @@
+
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 11pt;
+    }
+
+    /* Hide non-printable elements */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Show elements meant only for print */
+    .print-only {
+        display: block !important;
+    }
+    
+    /* Remove padding/margin from main layout */
+    main.container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Restyle the cards for a clean document look */
+    .space-y-8 > div {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        border-top-width: 2px !important;
+        border-radius: 0 !important;
+        padding: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        page-break-inside: avoid;
+    }
+    
+    /* Restyle idea items */
+    .space-y-2 > div { 
+        background-color: transparent !important;
+    }
+        
+    /* Style the print header */
+    .print-header-title {
+        font-size: 20pt;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .print-header-objective {
+        font-size: 14pt;
+        color: #333;
+        font-style: italic;
+    }
+
+    /* Lesson Explanation Section */
+    .font-naskh.text-xl {
+        font-size: 12pt !important;
+        line-height: 1.6 !important;
+        color: #000 !important;
+    }
+
+    .text-amber-600, .dark\:text-amber-400,
+    .text-sky-600, .dark\:text-sky-400 {
+        color: #000 !important;
+        font-style: italic; /* Make quotes italic for print */
+        font-weight: bold; /* Make verses bold for print */
+    }
+
+    /* References section */
+    div > h4 { /* Target the "المراجع" header */
+        font-size: 13pt !important;
+        font-weight: bold !important;
+        margin-top: 1rem !important;
+        padding-top: 0.5rem !important;
+        border-top: 1px solid #ccc !important;
+        color: #000 !important;
+    }
+
+    div > ul { /* Target the references list */
+        font-size: 10pt !important;
+        color: #333 !important;
+    }
+
+    /* Reposition and style footer for print */
+    footer {
+       position: fixed;
+       bottom: 20px;
+       left: 0;
+       right: 0;
+       text-align: center;
+       background: none !important;
+       color: #888 !important;
+       font-size: 9pt;
+       margin: 0 !important;
+       padding: 0 !important;
+    }
+}

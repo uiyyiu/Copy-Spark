@@ -1,0 +1,98 @@
+/*
+  SPARK CARD COMPONENT SYSTEM
+  ---------------------------
+*/
+
+/* 1. UI Tokens */
+:root {
+  --card-bg: var(--card-bg-light);
+  --card-radius: 16px;
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --card-border: 1px solid var(--border-light);
+  --card-divider: 1px solid var(--border-light);
+}
+
+.dark {
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* 2. Base Card Structure */
+.spark-card {
+  border-radius: var(--card-radius);
+  transition: all 0.2s ease-in-out;
+}
+
+/* 3. Card Variants */
+
+/* Standard Card (Default, no elevation) */
+.spark-card--standard {
+  background-color: transparent;
+  border: var(--card-border);
+  padding: 1.5rem;
+}
+
+/* Elevated Card (Primary choice for forms) */
+/* UPDATED: Added backdrop-filter for global glass effect */
+.spark-card--elevated {
+  background-color: var(--card-bg);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1.5rem;
+}
+
+/* Minimal Card (No background or border) */
+.spark-card--minimal {
+  background-color: transparent;
+  border: none;
+  padding: 0; /* Minimal cards often don't need padding */
+}
+
+/* 4. Internal Components & RTL Rules */
+.spark-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  /* RTL: Alignment is handled by parent's dir="rtl" */
+}
+
+.spark-card__body {
+  /* Container for main content like inputs, text, etc. */
+}
+
+.spark-card__divider {
+  border-top: var(--card-divider);
+  margin-block: 1rem;
+}
+
+/* 5. Interaction States */
+
+/* Hover: subtle lift for elevated cards */
+.spark-card--elevated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.2);
+}
+.dark .spark-card--elevated:hover {
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Focus-within: clear indication of active section */
+.spark-card:focus-within {
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+/* Error State */
+.spark-card.is-error {
+  border-color: #D32F2F;
+  background-color: rgba(211, 47, 47, 0.1);
+  box-shadow: 0 0 0 1px #D32F2F;
+}
+
+/* Disabled State */
+.spark-card:disabled,
+.spark-card.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}

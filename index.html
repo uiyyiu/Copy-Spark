@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Spark</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Spark" />
+    <link rel="apple-touch-icon" href="/vite.svg" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="print.css">
+    <link rel="stylesheet" href="typography.css">
+    <link rel="stylesheet" href="cards.css">
+    <style>
+      :root {
+        /* Cinematic Theme Variables */
+        --bg-overlay: #050505;
+        
+        /* Glass Card Styles */
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-blur: 20px;
+        
+        --card-bg-light: var(--glass-bg); /* Override legacy light var */
+        --card-bg-dark: var(--glass-bg);
+        
+        --text-light-primary: #ffffff;
+        --text-dark-primary: #ffffff;
+        --text-light-secondary: #94a3b8; /* Slate 400 */
+        --text-dark-secondary: #94a3b8;
+        
+        --border-light: var(--glass-border);
+        --border-dark: var(--glass-border);
+        
+        --accent-gold: #D4AF37;
+        --accent-gold-hover: #C09E31;
+        --accent-maroon: #800020;
+      }
+
+      /* Force Dark Mode aesthetics globally */
+      body {
+        background-color: #0f172a; /* Fallback */
+        background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=3540&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: var(--text-light-primary);
+        min-height: 100vh;
+        overflow-x: hidden; /* Prevent horizontal scroll */
+        -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+      }
+
+      /* The Global Glass Card Class */
+      .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Intro Screen Animations */
+      @keyframes spark-flash {
+        0%, 100% {
+          color: white;
+          text-shadow: 0 0 0px transparent;
+        }
+        10% {
+            color: #FEF3C7; /* Amber 100 */
+            text-shadow: 0 0 15px #FCD34D, 0 0 30px #F59E0B; /* Amber 300 & 500 */
+        }
+        20% {
+          color: white;
+          text-shadow: 0 0 0px transparent;
+        }
+      }
+      .animate-spark-flash {
+        animation: spark-flash 5s ease-in-out infinite;
+      }
+
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s ease-out;
+      }
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.3s ease-out;
+      }
+      @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-down {
+        animation: fade-in-down 0.3s ease-out;
+      }
+      
+      /* PDF Export utility */
+      body.pdf-export-selected-only .idea-item:not(.selected) {
+        display: none !important;
+      }
+
+      /* Selection Color */
+      ::selection {
+        background-color: rgba(212, 175, 55, 0.3);
+        color: white;
+      }
+    </style>
+    <script>
+      // Force dark mode logic for Tailwind
+      document.documentElement.classList.add('dark');
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.24.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
+  }
+}
+</script>
+</head>
+  <body class="antialiased selection:bg-amber-500/30">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
