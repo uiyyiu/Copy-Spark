@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
 
@@ -206,7 +205,7 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
         }));
 
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
+            model: "gemini-2.5-flash", // Used Flash for faster chat responses
             contents: [...historyForApi, { role: 'user', parts: [{ text: newUserQuery }] }],
             config: { systemInstruction: systemInstruction + "\nContext: You are a helpful assistant answering questions about Coptic Orthodox theology and history in Arabic. Use the provided references context." + referencesContext, temperature: 0.3 },
         });
@@ -234,7 +233,7 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
         }));
 
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
+            model: "gemini-2.5-flash", // Used Flash for faster chat
             contents: [...historyForApi, { role: 'user', parts: [{ text: userMessage }] }],
             config: { systemInstruction: systemPrompt, temperature: 0.5 },
         });
@@ -274,7 +273,7 @@ export async function generateAlternativeIdea(
 export async function explainIdea(ideaText: string, ageGroup: AgeGroup): Promise<string> {
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
+            model: "gemini-2.5-flash",
             contents: `Explain how to implement this idea in Arabic: "${ideaText}" for age group "${ageGroup}".`,
             config: { temperature: 0.6 }
         });
@@ -574,10 +573,10 @@ export async function getChapterInterpretation(bookName: string, chapter: number
 
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview", // Using Pro for deeper reasoning and better handling of large context/references
+            model: "gemini-2.5-flash", // Switch to Flash for reliability/speed on deployment
             contents: prompt,
             config: {
-                temperature: 0.4, // Lower temperature for factual/theological accuracy
+                temperature: 0.4, 
             }
         });
 
@@ -630,10 +629,10 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
 
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", // Switched to flash for better stability on this creative task
+            model: "gemini-2.5-flash", 
             contents: prompt,
             config: {
-                temperature: 0.7, // Higher temperature for creative/storytelling style
+                temperature: 0.7, 
             }
         });
 
