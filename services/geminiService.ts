@@ -128,8 +128,8 @@ export async function generateLessonIdeas(
             },
         });
 
-        const jsonText = response.text.trim();
-        const parsedData = JSON.parse(jsonText);
+        const jsonText = (response.text || "").trim();
+        const parsedData = JSON.parse(jsonText || "{}");
         
         // Construct legacy explanation for backward compatibility
         const combinedExplanation = `
@@ -148,10 +148,10 @@ export async function generateLessonIdeas(
             lessonElements: parsedData.lessonElements,
             lessonBody: parsedData.lessonBody,
             references: parsedData.references,
-            warmUp: structureIdeas(parsedData.warmUp),
-            illustration: structureIdeas(parsedData.illustration),
-            application: structureIdeas(parsedData.application),
-            practice: structureIdeas(parsedData.practice),
+            warmUp: structureIdeas(parsedData.warmUp || { title: "التمهيد", ideas: [] }),
+            illustration: structureIdeas(parsedData.illustration || { title: "وسيلة الإيضاح", ideas: [] }),
+            application: structureIdeas(parsedData.application || { title: "التطبيق", ideas: [] }),
+            practice: structureIdeas(parsedData.practice || { title: "التدريب", ideas: [] }),
         };
 
         if (parsedData.verseExplanation) lessonPlan.verseExplanation = parsedData.verseExplanation;
@@ -189,7 +189,7 @@ export async function generateGameIdeas(count: string, place: string, tools: str
             config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.9 }
         });
 
-        const json = JSON.parse(response.text);
+        const json = JSON.parse(response.text || "{}");
         return json.games || [];
     } catch (e) {
         throw new Error("فشل في توليد الألعاب");
@@ -209,7 +209,7 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
             config: { systemInstruction: systemInstruction + "\nContext: You are a helpful assistant answering questions about Coptic Orthodox theology and history in Arabic. Use the provided references context." + referencesContext, temperature: 0.3 },
         });
 
-        return response.text.trim();
+        return (response.text || "").trim();
     } catch (error) {
         throw new Error("Connection failed.");
     }
@@ -236,7 +236,7 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
             config: { systemInstruction: systemPrompt, temperature: 0.5 },
         });
 
-        return response.text.trim();
+        return (response.text || "").trim();
     } catch (error) {
         console.error("Error in chatWithExplanation:", error);
         throw new Error("Failed to generate response.");
@@ -260,7 +260,7 @@ export async function generateAlternativeIdea(
             contents: requestContents,
             config: { temperature: 0.95 }
         });
-        return response.text.trim();
+        return (response.text || "").trim();
     } catch (error) {
         throw new Error("Failed to generate alternative.");
     }
@@ -273,7 +273,7 @@ export async function explainIdea(ideaText: string, ageGroup: AgeGroup): Promise
             contents: `Explain how to implement this idea in Arabic: "${ideaText}" for age group "${ageGroup}".`,
             config: { temperature: 0.6 }
         });
-        return response.text.trim();
+        return (response.text || "").trim();
     } catch (error) {
         throw new Error("Failed to explain idea.");
     }
@@ -286,7 +286,7 @@ export async function generateSuggestedQuestions(lessonExplanation: string): Pro
             contents: `Based on this explanation, generate 3 short follow-up questions in Arabic. Explanation: ${lessonExplanation}`,
             config: { responseMimeType: "application/json", responseSchema: {type: Type.OBJECT, properties: {questions: {type: Type.ARRAY, items: {type: Type.STRING}}}, required: ["questions"]} }
         });
-        const json = JSON.parse(response.text);
+        const json = JSON.parse(response.text || "{}");
         return json.questions || [];
     } catch (error) { return []; }
 }
@@ -514,7 +514,7 @@ export async function getLinguisticAnalysis(bookName: string, chapter: number, t
             }
         });
 
-        const json = JSON.parse(response.text);
+        const json = JSON.parse(response.text || "{}");
         const results = json.analysis || [];
         linguisticAnalysisCache.set(cacheKey, results);
         return results;
@@ -572,7 +572,7 @@ export async function getChapterInterpretation(bookName: string, chapter: number
             }
         });
 
-        const text = response.text.trim();
+        const text = (response.text || "").trim();
         interpretationCache.set(cacheKey, text);
         return text;
 
@@ -627,7 +627,7 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
             }
         });
 
-        const text = response.text.trim();
+        const text = (response.text || "").trim();
         simplifiedExplanationCache.set(cacheKey, text);
         return text;
 
