@@ -1,6 +1,8 @@
 
+
+
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon } from './icons';
+import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon } from './icons';
 
 interface HeaderProps {
     onReset: () => void;
@@ -17,6 +19,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
     const [installPrompt, setInstallPrompt] = useState<any>(null);
 
@@ -61,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
     ];
 
     return (
-        <header className={`sticky top-0 z-10 no-print transition-all duration-500 ${headerClasses}`}>
+        <header className={`sticky top-0 z-50 no-print transition-all duration-500 ${headerClasses}`}>
             <div className="container mx-auto flex justify-between items-center p-4">
                 
                 {/* Logo and Nav Section */}
@@ -70,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                          <h1 className="text-3xl font-bold tracking-widest font-['Playfair_Display'] animate-spark-flash select-none text-white">SPARK</h1>
                     </div>
                     
-                    {/* Nav Links - Hidden on small screens, visible on md and up */}
+                    {/* Nav Links - Desktop */}
                     <nav className="hidden md:flex items-center gap-1">
                          {navItems.map((item) => (
                             <button 
@@ -91,6 +94,15 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                 {/* Actions Section */}
                 <div className="flex items-center gap-2">
                     <div id="header-actions" className="flex items-center gap-2">
+                        {/* Mobile Menu Toggle */}
+                        <button 
+                            className="md:hidden p-2 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
+                        </button>
+
                         {installPrompt && (
                             <button 
                                 onClick={handleInstallClick}
@@ -133,6 +145,30 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Menu Dropdown */}
+            {isMobileMenuOpen && (
+                <div className="absolute top-full left-0 right-0 bg-[#0f172a] border-b border-white/10 p-4 md:hidden shadow-xl animate-fade-in-down z-40">
+                    <nav className="flex flex-col gap-2">
+                        {navItems.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => {
+                                    onOpenInfoModal(item.id);
+                                    setIsMobileMenuOpen(false);
+                                }}
+                                className={`text-right px-4 py-3 rounded-lg text-sm font-bold transition-all ${
+                                    item.highlight 
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                }`}
+                            >
+                                {item.label}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            )}
         </header>
     );
 };
