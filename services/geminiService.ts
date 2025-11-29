@@ -116,8 +116,9 @@ export async function generateLessonIdeas(
             requestContents = prompt;
         }
 
+        // Switched to gemini-2.5-flash for speed and reliability on Vercel
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
+            model: "gemini-2.5-flash",
             contents: requestContents,
             config: {
                 systemInstruction: systemInstruction,
@@ -183,8 +184,9 @@ export async function generateGameIdeas(count: string, place: string, tools: str
 
         const prompt = `Generate 5 church games in Arabic for: ${count} people, Place: ${place}, Tools: ${tools}, Goal: ${goal}.`;
 
+        // Switched to gemini-2.5-flash
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
+            model: "gemini-2.5-flash",
             contents: prompt,
             config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.9 }
         });
@@ -205,7 +207,7 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
         }));
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", // Used Flash for faster chat responses
+            model: "gemini-2.5-flash", 
             contents: [...historyForApi, { role: 'user', parts: [{ text: newUserQuery }] }],
             config: { systemInstruction: systemInstruction + "\nContext: You are a helpful assistant answering questions about Coptic Orthodox theology and history in Arabic. Use the provided references context." + referencesContext, temperature: 0.3 },
         });
@@ -233,7 +235,7 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
         }));
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", // Used Flash for faster chat
+            model: "gemini-2.5-flash", 
             contents: [...historyForApi, { role: 'user', parts: [{ text: userMessage }] }],
             config: { systemInstruction: systemPrompt, temperature: 0.5 },
         });
@@ -258,8 +260,9 @@ export async function generateAlternativeIdea(
             requestContents = { parts: [...imageParts, { text: prompt }] };
         }
 
+        // Switched to gemini-2.5-flash
         const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview", 
+            model: "gemini-2.5-flash", 
             contents: requestContents,
             config: { temperature: 0.95 }
         });
@@ -573,10 +576,10 @@ export async function getChapterInterpretation(bookName: string, chapter: number
 
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", // Switch to Flash for reliability/speed on deployment
+            model: "gemini-2.5-flash", // Use Flash for stability and speed
             contents: prompt,
             config: {
-                temperature: 0.4, 
+                temperature: 0.4, // Lower temperature for factual/theological accuracy
             }
         });
 
