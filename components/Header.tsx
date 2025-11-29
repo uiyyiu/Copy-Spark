@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon } from './icons';
 
@@ -15,9 +13,11 @@ interface HeaderProps {
     toggleTheme: () => void;
     onOpenInfoModal: (modalId: string) => void;
     isHero?: boolean;
+    user?: any;
+    onSignOut?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal }) => {
+const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal, user, onSignOut }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -141,6 +141,28 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                                     <span className="spark-caption font-semibold">خطة جديدة</span>
                                 </button>
                             </>
+                        )}
+
+                        {/* User Profile / Logout */}
+                        {user && onSignOut && (
+                            <div className="flex items-center gap-2 border-l border-white/10 pl-2 ml-2">
+                                <div className="hidden md:flex flex-col items-end mr-2">
+                                    <span className="text-xs text-white font-bold max-w-[100px] truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
+                                    <button onClick={onSignOut} className="text-[10px] text-red-400 hover:text-red-300 transition-colors">تسجيل خروج</button>
+                                </div>
+                                <img 
+                                    src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user.email}&background=random`} 
+                                    alt="User" 
+                                    className="w-8 h-8 rounded-full border border-white/20"
+                                    title={user.email}
+                                />
+                                <button onClick={onSignOut} className="md:hidden text-red-400 p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                                        <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25Z" clipRule="evenodd" />
+                                        <path fillRule="evenodd" d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 19 10Z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
