@@ -1,5 +1,7 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { supabase } from './services/supabase'; // Switch to Supabase
+import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -28,6 +30,10 @@ const initialFormData = {
 };
 
 function App() {
+  // Auth State
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [showIntro, setShowIntro] = useState(true);
   const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
   
@@ -63,6 +69,23 @@ function App() {
   const toggleTheme = () => {}; 
   
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Monitor Supabase Auth State
+  useEffect(() => {
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   const handleReset = useCallback(() => {
     setFormData(initialFormData);
@@ -80,7 +103,6 @@ function App() {
   const { elements: lessonElements, lessonBody, references } = useMemo(() => {
     if (!lessonPlan) return { elements: [], lessonBody: '', references: [] };
     
-    // If structured data exists from the API (new format), use it.
     if (lessonPlan.lessonElements && lessonPlan.lessonBody) {
         return {
             elements: lessonPlan.lessonElements,
@@ -89,7 +111,6 @@ function App() {
         };
     }
 
-    // Fallback for legacy or error cases
     return parseLessonExplanation(lessonPlan.lessonExplanation);
   }, [lessonPlan]);
 
@@ -107,7 +128,6 @@ function App() {
       const result = await generateLessonIdeas(formData.lessonTitle, formData.spiritualObjective, formData.ageGroup, formData.lessonImages, formData.scriptureVerse);
       setLessonPlan(result);
       
-      // Generate questions based on the body if available, otherwise explanation
       const contextForQuestions = result.lessonBody || result.lessonExplanation;
       
       setIsLoadingSuggestions(true);
@@ -297,6 +317,24 @@ function App() {
       return null;
   };
 
+  // Auth Guard: Loading State
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0f172a]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-serif">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth Guard: Not Logged In -> Show SignInScreen
+  if (!user) {
+    return <SignInScreen />;
+  }
+
+  // Auth Guard: Logged In -> Show App
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-500 overflow-x-hidden`}>
       <div className="fixed inset-0 bg-[#050505]/80 pointer-events-none mix-blend-multiply z-0"></div>
@@ -316,6 +354,7 @@ function App() {
             theme={theme}
             toggleTheme={toggleTheme}
             onOpenInfoModal={setActiveInfoModal}
+            user={user} // Pass Supabase User
         />
         
         <main className={`flex-grow flex flex-col justify-center px-3 py-6 sm:px-6 lg:px-8 transition-all duration-500`}>
@@ -362,4 +401,3 @@ function App() {
 }
 
 export default App;
-    

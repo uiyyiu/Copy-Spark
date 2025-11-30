@@ -1,8 +1,7 @@
 
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon } from './icons';
+import { signOut } from '../services/supabase'; // Use Supabase signOut
 
 interface HeaderProps {
     onReset: () => void;
@@ -15,9 +14,10 @@ interface HeaderProps {
     toggleTheme: () => void;
     onOpenInfoModal: (modalId: string) => void;
     isHero?: boolean;
+    user?: any; // Supabase user object
 }
 
-const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal }) => {
+const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal, user }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -52,6 +52,14 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
             setInstallPrompt(null);
         }
     };
+    
+    const handleSignOut = () => {
+        signOut();
+    };
+    
+    // Supabase user object typically has user_metadata for OAuth info
+    const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+    const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
     
     const actionButtonClasses = "hidden sm:flex items-center gap-2 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold border border-white/10 px-3 py-2 backdrop-blur-sm";
     const headerClasses = "bg-transparent border-b border-white/5";
@@ -94,6 +102,27 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                 {/* Actions Section */}
                 <div className="flex items-center gap-2">
                     <div id="header-actions" className="flex items-center gap-2">
+                        
+                        {/* User Profile / Logout */}
+                        {user && (
+                            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-white/10">
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="User" className="w-8 h-8 rounded-full border border-white/20 hidden sm:block" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs border border-amber-500/30 hidden sm:flex">
+                                        {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                )}
+                                <button 
+                                    onClick={handleSignOut} 
+                                    className="text-xs font-bold text-slate-400 hover:text-red-400 transition-colors"
+                                    title="تسجيل الخروج"
+                                >
+                                    خروج
+                                </button>
+                            </div>
+                        )}
+
                         {/* Mobile Menu Toggle */}
                         <button 
                             className="md:hidden p-2 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
