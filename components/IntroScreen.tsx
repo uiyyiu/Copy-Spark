@@ -223,7 +223,7 @@ const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter }) => {
         "علم اللاهوت المقارن (للبابا شنودة الثالث)",
         "كتاب المسيح واحد (للقديس كيرلس الأسكندري)"
       ]
-    },
+    }
   ];
 
   const referencesContent = (
@@ -342,7 +342,7 @@ const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter }) => {
 
         <footer className="relative z-10 p-6 md:p-8 w-full max-w-7xl mx-auto flex flex-col items-center justify-center opacity-80 md:opacity-60 hover:opacity-100 transition-opacity">
              <div className="text-[12px] text-slate-400 uppercase tracking-widest font-medium">
-                 Produced By Mark George
+                 Produced By Mark George • v1.3.0
              </div>
         </footer>
 

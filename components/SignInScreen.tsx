@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { signInWithGoogle } from '../services/supabase';
 import { track } from '@vercel/analytics';
@@ -65,7 +66,7 @@ const SignInScreen: React.FC = () => {
                 </button>
             </div>
              <footer className="absolute bottom-6 text-slate-500 dark:text-slate-400 text-sm">
-                Produced by Mark George
+                Produced by Mark George • v1.3.0
             </footer>
         </div>
     );
