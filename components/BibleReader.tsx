@@ -1,16 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { bibleBooks, BibleBook } from '../utils/bibleData';
 import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, getSimplifiedExplanation, BibleVerse, LinguisticAnalysisItem } from '../services/geminiService';
 import { formatTextToHtml } from '../services/exportService';
-import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon } from './icons';
+import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon, BookmarkIcon } from './icons';
+import { saveLessonToLibrary } from '../services/supabase';
 
 interface BibleReaderProps {
     isLoading?: boolean;
+    user?: any;
 }
 
 type ViewState = 'testament-select' | 'book-select' | 'chapter-select' | 'reading';
 
-const BibleReader: React.FC<BibleReaderProps> = () => {
+const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
     const [view, setView] = useState<ViewState>('testament-select');
     const [selectedTestament, setSelectedTestament] = useState<'old' | 'new' | null>(null);
     const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null);
@@ -36,6 +39,28 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
     const [showSimpleExplanation, setShowSimpleExplanation] = useState(false);
     const [simpleExplanationData, setSimpleExplanationData] = useState<string | null>(null);
     const [isLoadingSimpleExplanation, setIsLoadingSimpleExplanation] = useState(false);
+
+    // Saving States
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+    const handleSaveContent = async (title: string, content: any) => {
+        if (!user) {
+            alert("يجب عليك تسجيل الدخول لحفظ المحتوى.");
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await saveLessonToLibrary(user.id, title, content);
+            setSaveSuccess(title);
+            setTimeout(() => setSaveSuccess(null), 3000);
+        } catch (err) {
+            console.error("Error saving:", err);
+            alert("فشل الحفظ. حاول مرة أخرى.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Organize books by group for better UI
     const groupedBooks = React.useMemo<Record<string, BibleBook[]>>(() => {
@@ -91,15 +116,14 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
     const fetchInterpretationData = async () => {
         if (!selectedBook) return;
         
-        // Logic to re-fetch if selection changed is complex, for now always fetch if selection present or if no data
         const shouldFetch = selectedVerses.length > 0 || !interpretationData;
 
         if (shouldFetch) {
             setIsLoadingInterpretation(true);
-            setInterpretationData(null); // Clear old data to show loading for new selection
+            setInterpretationData(null);
         }
         
-        setShowInterpretation(true); // Open panel
+        setShowInterpretation(true);
         
         if (shouldFetch) {
             try {
@@ -159,9 +183,7 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
         
         if (textToCopy) {
             navigator.clipboard.writeText(textToCopy);
-            // Optional: Show toast
         }
-        // Clear selection after copy? Maybe keep it.
         setSelectedVerses([]);
     };
 
@@ -329,7 +351,6 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                         {/* Top Bar Actions (Context Agnostic or Full Chapter) */}
                          {!hasSelection && (
                             <>
                                 <button
@@ -369,7 +390,6 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </div>
                 </div>
 
-                {/* Verse List View */}
                 <div className="bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl overflow-hidden min-h-[500px]">
                      {isLoadingText ? (
                         <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -413,7 +433,7 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </p>
                 </div>
 
-                {/* Floating Action Bar for Selection */}
+                {/* Floating Action Bar */}
                 {hasSelection && (
                     <div className="fixed bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none animate-fade-in-up">
                         <div className="bg-[#0f172a] border border-amber-500/30 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] p-2 flex items-center gap-2 pointer-events-auto">
@@ -469,7 +489,7 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </div>
                 )}
 
-                {/* Simplified Explanation Modal/Panel */}
+                {/* Simplified Explanation Modal */}
                 {showSimpleExplanation && (
                      <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
                         <div 
@@ -490,9 +510,24 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                                             : 'شرح مبسط للأصحاح بالكامل (عامية مصرية)'}
                                     </p>
                                 </div>
-                                <button onClick={() => setShowSimpleExplanation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
-                                    <XMarkIcon className="w-6 h-6" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {simpleExplanationData && (
+                                        <button 
+                                            onClick={() => handleSaveContent(
+                                                `شرح مبسط: ${selectedBook?.name} ${selectedChapter}`, 
+                                                { type: 'simple-explanation', body: simpleExplanationData }
+                                            )}
+                                            disabled={isSaving}
+                                            className={`p-2 rounded-lg text-slate-300 hover:text-green-400 hover:bg-green-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}
+                                            title="حفظ للمكتبة"
+                                        >
+                                            {isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess === `شرح مبسط: ${selectedBook?.name} ${selectedChapter}` ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
+                                        </button>
+                                    )}
+                                    <button onClick={() => setShowSimpleExplanation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
+                                        <XMarkIcon className="w-6 h-6" />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1e293b]/30">
@@ -521,7 +556,7 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </div>
                 )}
 
-                {/* Interpretation Modal/Panel */}
+                {/* Interpretation Modal */}
                 {showInterpretation && (
                     <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
                         <div 
@@ -542,9 +577,24 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                                             : 'شرح شامل للأصحاح مع أقوال الآباء'}
                                     </p>
                                 </div>
-                                <button onClick={() => setShowInterpretation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
-                                    <XMarkIcon className="w-6 h-6" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {interpretationData && (
+                                        <button 
+                                            onClick={() => handleSaveContent(
+                                                `تفسير: ${selectedBook?.name} ${selectedChapter}`, 
+                                                { type: 'interpretation', body: interpretationData }
+                                            )}
+                                            disabled={isSaving}
+                                            className={`p-2 rounded-lg text-slate-300 hover:text-purple-400 hover:bg-purple-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}
+                                            title="حفظ للمكتبة"
+                                        >
+                                            {isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
+                                        </button>
+                                    )}
+                                    <button onClick={() => setShowInterpretation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
+                                        <XMarkIcon className="w-6 h-6" />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1e293b]/30">
@@ -573,7 +623,7 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                     </div>
                 )}
 
-                {/* Linguistic Analysis Modal/Panel */}
+                {/* Linguistic Analysis Modal */}
                 {showAnalysis && (
                     <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
                         <div 
@@ -594,9 +644,24 @@ const BibleReader: React.FC<BibleReaderProps> = () => {
                                          : 'أبرز الفروقات اللغوية في الأصحاح'}
                                     </p>
                                 </div>
-                                <button onClick={() => setShowAnalysis(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
-                                    <XMarkIcon className="w-6 h-6" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {analysisData.length > 0 && (
+                                        <button 
+                                            onClick={() => handleSaveContent(
+                                                `تحليل لغوي: ${selectedBook?.name} ${selectedChapter}`, 
+                                                { type: 'linguistic-analysis', body: analysisData }
+                                            )}
+                                            disabled={isSaving}
+                                            className={`p-2 rounded-lg text-slate-300 hover:text-sky-400 hover:bg-sky-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}
+                                            title="حفظ للمكتبة"
+                                        >
+                                            {isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
+                                        </button>
+                                    )}
+                                    <button onClick={() => setShowAnalysis(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
+                                        <XMarkIcon className="w-6 h-6" />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">

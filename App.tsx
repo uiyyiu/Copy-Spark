@@ -21,7 +21,7 @@ import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
-import SavedItemsModal from './components/SavedItemsModal'; // Import new modal
+import SavedItemsModal from './components/SavedItemsModal'; 
 
 const initialFormData = {
     lessonTitle: '',
@@ -56,7 +56,7 @@ function App() {
   // Saving State
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [showSavedModal, setShowSavedModal] = useState(false); // State for saved modal
+  const [showSavedModal, setShowSavedModal] = useState(false); 
 
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
@@ -105,10 +105,10 @@ function App() {
     setSuggestedQuestions([]);
     setCurrentStep(1);
     setSelectedTool(null);
-    setSaveSuccess(false); // Reset save state
+    setSaveSuccess(false); 
   }, []);
 
-  // Handle Saving to Supabase
+  // Handle Saving Lesson Plan to Supabase
   const handleSave = async () => {
       if (!user || !lessonPlan) return;
       
@@ -117,7 +117,7 @@ function App() {
       try {
           await saveLessonToLibrary(user.id, formData.lessonTitle, lessonPlan);
           setSaveSuccess(true);
-          setTimeout(() => setSaveSuccess(false), 3000); // Hide success msg after 3s
+          setTimeout(() => setSaveSuccess(false), 3000); 
       } catch (err: any) {
           console.error("Save error:", err);
           setError("فشل حفظ الدرس. يرجى المحاولة مرة أخرى.");
@@ -338,7 +338,7 @@ function App() {
       }
 
       if (selectedTool === 'bible-reader') {
-        return <BibleReader />;
+        return <BibleReader user={user} />;
       }
 
       return null;
@@ -381,7 +381,7 @@ function App() {
             isSaving={isSaving} 
             saveSuccess={saveSuccess}
             onSignOut={signOut} 
-            onOpenSaved={() => setShowSavedModal(true)} // Open modal handler
+            onOpenSaved={() => setShowSavedModal(true)} 
             isExportingPdf={isExportingPdf}
             theme={theme}
             toggleTheme={toggleTheme}
