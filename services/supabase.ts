@@ -48,3 +48,25 @@ export const saveLessonToLibrary = async (userId: string, title: string, content
     if (error) throw error;
     return data;
 };
+
+// Fetch saved lessons for a user
+export const getSavedLessons = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('saved_lessons')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+        
+    if (error) throw error;
+    return data;
+};
+
+// Delete a saved lesson
+export const deleteSavedLesson = async (id: string) => {
+    const { error } = await supabase
+        .from('saved_lessons')
+        .delete()
+        .eq('id', id);
+        
+    if (error) throw error;
+};

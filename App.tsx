@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { supabase, saveLessonToLibrary, signOut } from './services/supabase'; // Import signOut
+import { supabase, saveLessonToLibrary, signOut } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
 import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
@@ -21,6 +21,7 @@ import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
+import SavedItemsModal from './components/SavedItemsModal'; // Import new modal
 
 const initialFormData = {
     lessonTitle: '',
@@ -55,6 +56,7 @@ function App() {
   // Saving State
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showSavedModal, setShowSavedModal] = useState(false); // State for saved modal
 
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
@@ -378,7 +380,8 @@ function App() {
             onSave={handleSave} 
             isSaving={isSaving} 
             saveSuccess={saveSuccess}
-            onSignOut={signOut} // Pass signOut to Header
+            onSignOut={signOut} 
+            onOpenSaved={() => setShowSavedModal(true)} // Open modal handler
             isExportingPdf={isExportingPdf}
             theme={theme}
             toggleTheme={toggleTheme}
@@ -424,6 +427,8 @@ function App() {
       <Modal isOpen={modalState.isOpen} title={modalState.title} content={modalState.content} isShare={modalState.isShare} onClose={() => setModalState({...modalState, isOpen: false})} />
       
       <InfoModal activeModal={activeInfoModal} onClose={() => setActiveInfoModal(null)} />
+      
+      <SavedItemsModal isOpen={showSavedModal} onClose={() => setShowSavedModal(false)} userId={user?.id} />
 
       {lessonPlan && <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} lessonContext={lessonPlan.lessonBody || lessonPlan.lessonExplanation} suggestedQuestions={suggestedQuestions} isLoadingSuggestions={isLoadingSuggestions} />}
     </div>

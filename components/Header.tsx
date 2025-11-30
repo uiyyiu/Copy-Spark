@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon } from './icons';
+import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon, ArchiveIcon, LogoutIcon } from './icons';
 
 interface HeaderProps {
     onReset: () => void;
@@ -8,16 +8,17 @@ interface HeaderProps {
     onPrint: () => void;
     onExport: (format: 'txt' | 'html', selectedOnly: boolean) => void;
     onExportPdf: (selectedOnly: boolean) => void;
-    onSave?: () => void; // New prop for saving
-    isSaving?: boolean;  // New prop for saving state
-    saveSuccess?: boolean; // New prop for success state
-    onSignOut?: () => void; // New prop for sign out action
+    onSave?: () => void;
+    isSaving?: boolean;
+    saveSuccess?: boolean;
+    onSignOut?: () => void;
+    onOpenSaved?: () => void; // New prop to open saved modal
     isExportingPdf: boolean;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     onOpenInfoModal: (modalId: string) => void;
     isHero?: boolean;
-    user?: any; // Supabase user object
+    user?: any;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -29,20 +30,26 @@ const Header: React.FC<HeaderProps> = ({
     onSave, 
     isSaving, 
     saveSuccess,
-    onSignOut, // Destructure onSignOut
+    onSignOut, 
+    onOpenSaved, // Destructure onOpenSaved
     isExportingPdf, 
     onOpenInfoModal, 
     user 
 }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // State for profile dropdown
     const exportMenuRef = useRef<HTMLDivElement>(null);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
     const [installPrompt, setInstallPrompt] = useState<any>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
                 setIsExportMenuOpen(false);
+            }
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -69,7 +76,6 @@ const Header: React.FC<HeaderProps> = ({
         }
     };
     
-    // Supabase user object typically has user_metadata for OAuth info
     const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
     const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
     
@@ -93,7 +99,6 @@ const Header: React.FC<HeaderProps> = ({
                          <h1 className="text-3xl font-bold tracking-widest font-['Playfair_Display'] animate-spark-flash select-none text-white">SPARK</h1>
                     </div>
                     
-                    {/* Nav Links - Desktop */}
                     <nav className="hidden md:flex items-center gap-1">
                          {navItems.map((item) => (
                             <button 
@@ -115,24 +120,50 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center gap-2">
                     <div id="header-actions" className="flex items-center gap-2">
                         
-                        {/* User Profile / Logout */}
+                        {/* User Profile Dropdown */}
                         {user && (
-                            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-white/10">
-                                {avatarUrl ? (
-                                    <img src={avatarUrl} alt="User" className="w-8 h-8 rounded-full border border-white/20 hidden sm:block" />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs border border-amber-500/30 hidden sm:flex">
-                                        {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                            <div className="relative ml-2 pl-2 border-l border-white/10" ref={profileMenuRef}>
+                                <button 
+                                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                    className="flex items-center gap-2 focus:outline-none"
+                                >
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="User" className="w-9 h-9 rounded-full border border-white/20 hover:border-amber-500/50 transition-colors" />
+                                    ) : (
+                                        <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm border border-amber-500/30 hover:bg-amber-500/30 transition-colors">
+                                            {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                                        </div>
+                                    )}
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {isProfileMenuOpen && (
+                                    <div className="absolute left-0 mt-2 w-48 bg-[#1e293b] rounded-xl shadow-2xl ring-1 ring-white/10 z-50 animate-fade-in-down border border-white/10 p-1">
+                                        <div className="px-4 py-3 border-b border-white/5 mb-1">
+                                            <p className="text-sm text-white font-bold truncate">{fullName}</p>
+                                            <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                                        </div>
+                                        
+                                        {onOpenSaved && (
+                                            <button 
+                                                onClick={() => { onOpenSaved(); setIsProfileMenuOpen(false); }} 
+                                                className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
+                                            >
+                                                <ArchiveIcon className="w-4 h-4 text-amber-400" />
+                                                المحفوظات
+                                            </button>
+                                        )}
+                                        
+                                        {onSignOut && (
+                                            <button 
+                                                onClick={() => { onSignOut(); setIsProfileMenuOpen(false); }} 
+                                                className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mt-1"
+                                            >
+                                                <LogoutIcon className="w-4 h-4" />
+                                                تسجيل الخروج
+                                            </button>
+                                        )}
                                     </div>
-                                )}
-                                {onSignOut && (
-                                    <button 
-                                        onClick={onSignOut} 
-                                        className="text-xs font-bold text-slate-400 hover:text-red-400 transition-colors"
-                                        title="تسجيل الخروج"
-                                    >
-                                        خروج
-                                    </button>
                                 )}
                             </div>
                         )}
@@ -159,7 +190,6 @@ const Header: React.FC<HeaderProps> = ({
 
                         {showActions && (
                             <>
-                                {/* Save Button */}
                                 {onSave && (
                                     <button 
                                         onClick={onSave} 
