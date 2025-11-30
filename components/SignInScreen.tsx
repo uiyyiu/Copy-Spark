@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { signInWithGoogle } from '../services/supabase';
 import { track } from '@vercel/analytics';
@@ -16,7 +15,8 @@ const SignInScreen: React.FC = () => {
             
             if (error) {
                 console.error("Authentication error:", error);
-                setAuthError(error.message || "فشل تسجيل الدخول");
+                // Safe cast to access message, fallback if not present
+                setAuthError((error as any).message || "فشل تسجيل الدخول");
             } else {
                 // Tracking handled by session state change in App.tsx generally, 
                 // but can be triggered here if needed.

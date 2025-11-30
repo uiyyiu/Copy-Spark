@@ -1,6 +1,6 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from './services/supabase'; // Switch to Supabase
+import { Session, AuthChangeEvent } from '@supabase/supabase-js'; // Import types
 import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -73,13 +73,14 @@ function App() {
   // Monitor Supabase Auth State
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data.session;
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
 
     // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
