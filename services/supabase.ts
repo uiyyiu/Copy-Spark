@@ -32,3 +32,19 @@ export const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
 };
+
+// Save a lesson to the 'saved_lessons' table in Supabase
+export const saveLessonToLibrary = async (userId: string, title: string, content: any) => {
+    const { data, error } = await supabase
+        .from('saved_lessons')
+        .insert([
+            { 
+                user_id: userId, 
+                title: title, 
+                content: content 
+            }
+        ]);
+    
+    if (error) throw error;
+    return data;
+};

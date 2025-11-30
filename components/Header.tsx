@@ -1,7 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon } from './icons';
-import { signOut } from '../services/supabase'; // Use Supabase signOut
+import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon } from './icons';
 
 interface HeaderProps {
     onReset: () => void;
@@ -9,6 +8,10 @@ interface HeaderProps {
     onPrint: () => void;
     onExport: (format: 'txt' | 'html', selectedOnly: boolean) => void;
     onExportPdf: (selectedOnly: boolean) => void;
+    onSave?: () => void; // New prop for saving
+    isSaving?: boolean;  // New prop for saving state
+    saveSuccess?: boolean; // New prop for success state
+    onSignOut?: () => void; // New prop for sign out action
     isExportingPdf: boolean;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
@@ -17,7 +20,20 @@ interface HeaderProps {
     user?: any; // Supabase user object
 }
 
-const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport, onExportPdf, isExportingPdf, onOpenInfoModal, user }) => {
+const Header: React.FC<HeaderProps> = ({ 
+    onReset, 
+    showActions, 
+    onPrint, 
+    onExport, 
+    onExportPdf, 
+    onSave, 
+    isSaving, 
+    saveSuccess,
+    onSignOut, // Destructure onSignOut
+    isExportingPdf, 
+    onOpenInfoModal, 
+    user 
+}) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -53,15 +69,11 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
         }
     };
     
-    const handleSignOut = () => {
-        signOut();
-    };
-    
     // Supabase user object typically has user_metadata for OAuth info
     const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
     const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
     
-    const actionButtonClasses = "hidden sm:flex items-center gap-2 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold border border-white/10 px-3 py-2 backdrop-blur-sm";
+    const actionButtonClasses = "hidden sm:flex items-center gap-2 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold border border-white/10 px-3 py-2 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed";
     const headerClasses = "bg-transparent border-b border-white/5";
 
     const navItems = [
@@ -113,13 +125,15 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
                                         {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
                                     </div>
                                 )}
-                                <button 
-                                    onClick={handleSignOut} 
-                                    className="text-xs font-bold text-slate-400 hover:text-red-400 transition-colors"
-                                    title="تسجيل الخروج"
-                                >
-                                    خروج
-                                </button>
+                                {onSignOut && (
+                                    <button 
+                                        onClick={onSignOut} 
+                                        className="text-xs font-bold text-slate-400 hover:text-red-400 transition-colors"
+                                        title="تسجيل الخروج"
+                                    >
+                                        خروج
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -145,10 +159,32 @@ const Header: React.FC<HeaderProps> = ({ onReset, showActions, onPrint, onExport
 
                         {showActions && (
                             <>
+                                {/* Save Button */}
+                                {onSave && (
+                                    <button 
+                                        onClick={onSave} 
+                                        className={`${actionButtonClasses} ${saveSuccess ? 'text-green-400 border-green-500/30' : ''}`}
+                                        disabled={isSaving || saveSuccess}
+                                        aria-label="حفظ الدرس"
+                                    >
+                                        {isSaving ? (
+                                            <SpinnerIcon className="w-4 h-4 animate-spin" />
+                                        ) : saveSuccess ? (
+                                            <CheckCircleIcon className="w-4 h-4" />
+                                        ) : (
+                                            <BookmarkIcon className="w-4 h-4" />
+                                        )}
+                                        <span className="spark-caption font-semibold">
+                                            {saveSuccess ? 'تم الحفظ' : 'حفظ'}
+                                        </span>
+                                    </button>
+                                )}
+
                                 <button onClick={onPrint} className={actionButtonClasses} aria-label="طباعة">
                                     <PrintIcon className="w-4 h-4" />
                                     <span className="spark-caption font-semibold">طباعة</span>
                                 </button>
+                                
                                 <div className="relative" ref={exportMenuRef}>
                                 <button onClick={() => setIsExportMenuOpen(prev => !prev)} className={actionButtonClasses} aria-label="تصدير">
                                     <DownloadIcon className="w-4 h-4" />

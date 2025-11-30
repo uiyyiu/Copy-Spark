@@ -1,6 +1,7 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { supabase } from './services/supabase'; // Switch to Supabase
-import { Session, AuthChangeEvent } from '@supabase/supabase-js'; // Import types
+import { supabase, saveLessonToLibrary, signOut } from './services/supabase'; // Import signOut
+import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
 import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -50,6 +51,11 @@ function App() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  
+  // Saving State
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -72,14 +78,12 @@ function App() {
 
   // Monitor Supabase Auth State
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data }) => {
       const session = data.session;
       setUser(session?.user ?? null);
       setAuthLoading(false);
     });
 
-    // Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -99,7 +103,26 @@ function App() {
     setSuggestedQuestions([]);
     setCurrentStep(1);
     setSelectedTool(null);
+    setSaveSuccess(false); // Reset save state
   }, []);
+
+  // Handle Saving to Supabase
+  const handleSave = async () => {
+      if (!user || !lessonPlan) return;
+      
+      setIsSaving(true);
+      setError(null);
+      try {
+          await saveLessonToLibrary(user.id, formData.lessonTitle, lessonPlan);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 3000); // Hide success msg after 3s
+      } catch (err: any) {
+          console.error("Save error:", err);
+          setError("فشل حفظ الدرس. يرجى المحاولة مرة أخرى.");
+      } finally {
+          setIsSaving(false);
+      }
+  };
 
   const { elements: lessonElements, lessonBody, references } = useMemo(() => {
     if (!lessonPlan) return { elements: [], lessonBody: '', references: [] };
@@ -124,6 +147,7 @@ function App() {
     setError(null);
     setLessonPlan(null);
     setCurrentStep(0); 
+    setSaveSuccess(false);
 
     try {
       const result = await generateLessonIdeas(formData.lessonTitle, formData.spiritualObjective, formData.ageGroup, formData.lessonImages, formData.scriptureVerse);
@@ -351,11 +375,15 @@ function App() {
             onPrint={handlePrint}
             onExport={handleExport}
             onExportPdf={handleExportPdf}
+            onSave={handleSave} 
+            isSaving={isSaving} 
+            saveSuccess={saveSuccess}
+            onSignOut={signOut} // Pass signOut to Header
             isExportingPdf={isExportingPdf}
             theme={theme}
             toggleTheme={toggleTheme}
             onOpenInfoModal={setActiveInfoModal}
-            user={user} // Pass Supabase User
+            user={user} 
         />
         
         <main className={`flex-grow flex flex-col justify-center px-3 py-6 sm:px-6 lg:px-8 transition-all duration-500`}>
@@ -375,6 +403,7 @@ function App() {
                             setPatristicMessages([]);
                             setFormData(initialFormData);
                             setCurrentStep(1);
+                            setSaveSuccess(false);
                         }}
                         className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-semibold"
                     >
