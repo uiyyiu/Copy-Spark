@@ -1,7 +1,7 @@
 // 1. تهيئة Supabase Client
 // استبدل القيم أدناه بالبيانات الخاصة بمشروعك من Supabase Dashboard -> Settings -> API
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://yjixuahulcijxrixhfgi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqaXh1YWh1bGNpanhyaXhoZmdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MTE4MTksImV4cCI6MjA3OTk4NzgxOX0.ml2OH5tucmmATVhS3-4gnfKIkI3U7hQb33qpn3PaP4w';
 
 // التحقق من وجود المكتبة
 if (typeof supabase === 'undefined') {
