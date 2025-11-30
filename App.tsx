@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -18,8 +18,6 @@ import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
-import SignInScreen from './components/SignInScreen';
-import { supabase, signOut } from './services/supabase';
 
 const initialFormData = {
     lessonTitle: '',
@@ -30,11 +28,6 @@ const initialFormData = {
 };
 
 function App() {
-  // Auth State
-  const [session, setSession] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  // App State
   const [showIntro, setShowIntro] = useState(true);
   const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
   
@@ -70,33 +63,6 @@ function App() {
   const toggleTheme = () => {}; 
   
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-  // --- Auth Effect ---
-  useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-    });
-
-    // 2. Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setAuthLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleSignOut = async () => {
-      await signOut();
-      setSession(null);
-      // Reset app state on logout
-      handleReset();
-      setShowIntro(true);
-  };
   
   const handleReset = useCallback(() => {
     setFormData(initialFormData);
@@ -331,15 +297,6 @@ function App() {
       return null;
   };
 
-  // Auth Guard
-  if (authLoading) {
-      return <div className="min-h-screen flex items-center justify-center bg-[#0f172a]"><LoadingSpinner /></div>;
-  }
-
-  if (!session) {
-      return <SignInScreen />;
-  }
-
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-500 overflow-x-hidden`}>
       <div className="fixed inset-0 bg-[#050505]/80 pointer-events-none mix-blend-multiply z-0"></div>
@@ -359,8 +316,6 @@ function App() {
             theme={theme}
             toggleTheme={toggleTheme}
             onOpenInfoModal={setActiveInfoModal}
-            user={session.user}
-            onSignOut={handleSignOut}
         />
         
         <main className={`flex-grow flex flex-col justify-center px-3 py-6 sm:px-6 lg:px-8 transition-all duration-500`}>
@@ -407,3 +362,4 @@ function App() {
 }
 
 export default App;
+    
