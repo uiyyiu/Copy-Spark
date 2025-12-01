@@ -9,10 +9,16 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const signInWithGoogle = async () => {
     try {
+        // Get the current origin (e.g., https://spark-ministry.vercel.app)
+        const redirectUrl = window.location.origin;
+        
+        console.log(`Attempting Google Sign-In. Redirect URL set to: ${redirectUrl}`);
+        console.log(`Make sure '${redirectUrl}' is added to Supabase > Auth > URL Configuration > Redirect URLs`);
+
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin, // Redirect back to the app after login
+                redirectTo: redirectUrl, 
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent',
@@ -68,5 +74,52 @@ export const deleteSavedLesson = async (id: string) => {
         .delete()
         .eq('id', id);
         
+    if (error) throw error;
+};
+
+// --- Patristic Chat Functions ---
+
+export const createPatristicChat = async (userId: string, title: string, messages: any[]) => {
+    const { data, error } = await supabase
+        .from('patristic_chats')
+        .insert([
+            { user_id: userId, title, messages }
+        ])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updatePatristicChat = async (chatId: string, messages: any[]) => {
+    const { data, error } = await supabase
+        .from('patristic_chats')
+        .update({ messages, updated_at: new Date() })
+        .eq('id', chatId)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const getPatristicChats = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('patristic_chats')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+};
+
+export const deletePatristicChat = async (chatId: string) => {
+    const { error } = await supabase
+        .from('patristic_chats')
+        .delete()
+        .eq('id', chatId);
+
     if (error) throw error;
 };

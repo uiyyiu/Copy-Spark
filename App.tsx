@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { supabase, saveLessonToLibrary, signOut } from './services/supabase';
+import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
 import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
@@ -49,6 +49,8 @@ function App() {
   
   // Chat State for Patristic Assistant
   const [patristicMessages, setPatristicMessages] = useState<ChatMessage[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null); // Track active chat session
+  const [chatHistoryList, setChatHistoryList] = useState<any[]>([]); // List of previous chats
 
   const [isLoading, setIsLoading] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -94,11 +96,29 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
   
+  // Load Patristic Chat History when tool is selected
+  useEffect(() => {
+      if (selectedTool === 'patristic-assistant' && user) {
+          refreshChatList();
+      }
+  }, [selectedTool, user]);
+
+  const refreshChatList = async () => {
+      if (!user) return;
+      try {
+          const chats = await getPatristicChats(user.id);
+          setChatHistoryList(chats || []);
+      } catch (e) {
+          console.error("Failed to load chat history", e);
+      }
+  };
+
   const handleReset = useCallback(() => {
     setFormData(initialFormData);
     setLessonPlan(null);
     setGameResults(null);
     setPatristicMessages([]);
+    setCurrentChatId(null); // Reset active chat
     setError(null);
     setIsLoading(false);
     setItemIsLoading({});
@@ -185,6 +205,30 @@ function App() {
       }
   };
 
+  // Patristic Chat Handlers
+  const handlePatristicNewChat = () => {
+      setPatristicMessages([]);
+      setCurrentChatId(null);
+  };
+
+  const handlePatristicLoadChat = (chat: any) => {
+      setPatristicMessages(chat.messages);
+      setCurrentChatId(chat.id);
+  };
+
+  const handlePatristicDeleteChat = async (id: string) => {
+      if (!confirm("هل أنت متأكد من حذف هذه المحادثة؟")) return;
+      try {
+          await deletePatristicChat(id);
+          setChatHistoryList(prev => prev.filter(c => c.id !== id));
+          if (currentChatId === id) {
+              handlePatristicNewChat();
+          }
+      } catch (e) {
+          console.error("Failed to delete chat", e);
+      }
+  };
+
   const handlePatristicMessage = async (userMessage: string) => {
       if (!userMessage.trim()) return;
       
@@ -196,7 +240,29 @@ function App() {
       try {
           const historyForApi = newHistory.filter(m => m.role !== 'model' || !m.content.includes('Error'));
           const response = await chatWithPatristicAI(historyForApi, userMessage);
-          setPatristicMessages(prev => [...prev, { role: 'model' as const, content: response }]);
+          
+          const updatedHistory = [...newHistory, { role: 'model' as const, content: response }];
+          setPatristicMessages(updatedHistory);
+
+          // Save logic
+          if (user) {
+              if (currentChatId) {
+                  // Update existing chat
+                  await updatePatristicChat(currentChatId, updatedHistory);
+                  // Update local list to reflect changes if needed, mainly for date
+                  // Here we just refresh the whole list for simplicity to update timestamps
+                  // Ideally optimize to update just the item in array
+              } else {
+                  // Create new chat (Title is first 40 chars of first message)
+                  const title = userMessage.slice(0, 40) + (userMessage.length > 40 ? '...' : '');
+                  const newChat = await createPatristicChat(user.id, title, updatedHistory);
+                  if (newChat) {
+                      setCurrentChatId(newChat.id);
+                      setChatHistoryList(prev => [newChat, ...prev]);
+                  }
+              }
+          }
+
       } catch (err) {
           setError('حدث خطأ');
           setPatristicMessages(prev => [...prev, { role: 'model' as const, content: "عفواً، حدث خطأ في الاتصال." }]);
@@ -334,6 +400,11 @@ function App() {
                 messages={patristicMessages}
                 onSendMessage={handlePatristicMessage}
                 isLoading={isLoading}
+                chatHistory={chatHistoryList} // Pass history
+                currentChatId={currentChatId} // Pass current ID
+                onNewChat={handlePatristicNewChat}
+                onLoadChat={handlePatristicLoadChat}
+                onDeleteChat={handlePatristicDeleteChat}
               />
           );
       }
@@ -405,6 +476,7 @@ function App() {
                             setLessonPlan(null);
                             setGameResults(null);
                             setPatristicMessages([]);
+                            setCurrentChatId(null);
                             setFormData(initialFormData);
                             setCurrentStep(1);
                             setSaveSuccess(false);
