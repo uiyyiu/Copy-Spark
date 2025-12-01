@@ -264,7 +264,8 @@ function App() {
 
   const renderContent = () => {
       if (!showIntro && !selectedTool) {
-          return <ToolsDashboard onSelectTool={setSelectedTool} />;
+          // Pass User to ToolsDashboard
+          return <ToolsDashboard onSelectTool={setSelectedTool} user={user} />;
       }
 
       if (selectedTool === 'lesson-builder') {
