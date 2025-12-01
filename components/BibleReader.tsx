@@ -66,9 +66,12 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
             alert("يجب عليك تسجيل الدخول لحفظ المحتوى.");
             return;
         }
+        
+        const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
+
         setIsSaving(true);
         try {
-            await saveLessonToLibrary(user.id, title, content);
+            await saveLessonToLibrary(user.id, title, content, userName);
             setSaveSuccess(title);
             setTimeout(() => setSaveSuccess(null), 3000);
         } catch (err) {

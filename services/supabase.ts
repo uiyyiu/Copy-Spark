@@ -40,14 +40,15 @@ export const signOut = async () => {
 };
 
 // Save a lesson to the 'saved_lessons' table in Supabase
-export const saveLessonToLibrary = async (userId: string, title: string, content: any) => {
+export const saveLessonToLibrary = async (userId: string, title: string, content: any, userName?: string) => {
     const { data, error } = await supabase
         .from('saved_lessons')
         .insert([
             { 
                 user_id: userId, 
                 title: title, 
-                content: content 
+                content: content,
+                user_name: userName // Store the user's name
             }
         ]);
     
@@ -79,11 +80,16 @@ export const deleteSavedLesson = async (id: string) => {
 
 // --- Patristic Chat Functions ---
 
-export const createPatristicChat = async (userId: string, title: string, messages: any[]) => {
+export const createPatristicChat = async (userId: string, title: string, messages: any[], userName?: string) => {
     const { data, error } = await supabase
         .from('patristic_chats')
         .insert([
-            { user_id: userId, title, messages }
+            { 
+                user_id: userId, 
+                title, 
+                messages,
+                user_name: userName // Store the user's name
+            }
         ])
         .select()
         .single();

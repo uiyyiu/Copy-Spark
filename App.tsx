@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
@@ -132,10 +133,12 @@ function App() {
   const handleSave = async () => {
       if (!user || !lessonPlan) return;
       
+      const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
+
       setIsSaving(true);
       setError(null);
       try {
-          await saveLessonToLibrary(user.id, formData.lessonTitle, lessonPlan);
+          await saveLessonToLibrary(user.id, formData.lessonTitle, lessonPlan, userName);
           setSaveSuccess(true);
           setTimeout(() => setSaveSuccess(false), 3000); 
       } catch (err: any) {
@@ -249,13 +252,12 @@ function App() {
               if (currentChatId) {
                   // Update existing chat
                   await updatePatristicChat(currentChatId, updatedHistory);
-                  // Update local list to reflect changes if needed, mainly for date
-                  // Here we just refresh the whole list for simplicity to update timestamps
-                  // Ideally optimize to update just the item in array
               } else {
                   // Create new chat (Title is first 40 chars of first message)
                   const title = userMessage.slice(0, 40) + (userMessage.length > 40 ? '...' : '');
-                  const newChat = await createPatristicChat(user.id, title, updatedHistory);
+                  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
+                  
+                  const newChat = await createPatristicChat(user.id, title, updatedHistory, userName);
                   if (newChat) {
                       setCurrentChatId(newChat.id);
                       setChatHistoryList(prev => [newChat, ...prev]);
