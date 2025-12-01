@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الكتاب المقدس الدراسي - المخطوطات</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e2e2e2;
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid #333;
+        }
+        h1, h2 {
+            color: #e5b84a;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+        .controls select, .controls input, .controls button {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .controls select, .controls input { flex-grow: 1; }
+        .controls button {
+            background-color: #e5b84a;
+            color: #1a1a1a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .controls button:hover { background-color: #c99a2e; }
+        
+        #chapter-content {
+            background-color: #222;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            min-height: 50px;
+        }
+        
+        /* Manuscript Section Styles */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #444;
+            margin-bottom: 1.5rem;
+        }
+        .tab-button {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            color: #aaa;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-button.active {
+            color: #e5b84a;
+            border-bottom-color: #e5b84a;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .manuscript-card {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid #444;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        .manuscript-card p {
+            margin-top: 0;
+            color: #ccc;
+        }
+        .manuscript-card a {
+            display: inline-block;
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 1rem;
+            transition: background-color 0.2s;
+        }
+        .manuscript-card a:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>الكتاب المقدس الدراسي</h1>
+        
+        <div class="controls">
+            <select id="book-select"></select>
+            <input id="chapter-input" type="number" value="1" min="1" placeholder="الأصحاح">
+            <button id="load-btn">تحميل</button>
+        </div>
+        
+        <div id="chapter-content">
+            <p>سيظهر نص الأصحاح هنا...</p>
+        </div>
+        
+        <div id="manuscript-section" style="display: none;">
+            <h2>المخطوطات</h2>
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('sinaiticus')">السينائية (Sinaiticus)</button>
+                <button class="tab-button" onclick="switchTab('vaticanus')">الفاتيكانية (Vaticanus)</button>
+                <button class="tab-button" onclick="switchTab('alexandrinus')">الإسكندرانية (Alexandrinus)</button>
+            </div>
+            
+            <div id="tab-sinaiticus" class="tab-content active"></div>
+            <div id="tab-vaticanus" class="tab-content"></div>
+            <div id="tab-alexandrinus" class="tab-content"></div>
+        </div>
+    </div>
+
+    <script src="bible.js"></script>
+</body>
+</html>
