@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { bibleBooks, BibleBook } from '../utils/bibleData';
 import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, getSimplifiedExplanation, BibleVerse, LinguisticAnalysisItem } from '../services/geminiService';
@@ -362,80 +361,68 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
         const originalLabel = isOT ? 'عبري' : 'يوناني';
         const hasSelection = selectedVerses.length > 0;
 
-        // Container classes based on Focus Mode
         const containerClasses = isFocusMode 
             ? "fixed inset-0 z-50 bg-[#0f172a] overflow-y-auto px-4 pt-20 pb-32" 
             : "animate-fade-in max-w-4xl mx-auto pb-32 relative";
 
         return (
             <div className={containerClasses}>
-                {/* Reading Toolbar (Sticky) */}
-                <div className={`flex items-center justify-between border-b border-white/10 pb-4 sticky top-0 bg-[#0f172a]/95 backdrop-blur-md z-40 py-4 px-2 rounded-b-xl shadow-lg ${isFocusMode ? 'max-w-4xl mx-auto' : ''}`}>
-                    
-                    {/* Navigation */}
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <button onClick={handlePrevChapter} disabled={!selectedBook || selectedChapter <= 1} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-30">
-                            <ChevronDownIcon className="w-5 h-5 rotate-90" />
-                        </button>
-                        <div className="text-center min-w-[100px]">
-                            <h2 className="text-lg font-bold text-amber-500 font-serif">{selectedBook?.name}</h2>
-                            <p className="text-xs text-slate-400">{selectedChapter}</p>
+                <div className={`sticky top-0 bg-[#0f172a]/95 backdrop-blur-md z-40 py-4 rounded-b-xl shadow-lg ${isFocusMode ? 'max-w-4xl mx-auto' : ''}`}>
+                    {/* Reading Toolbar */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4 px-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <button onClick={handlePrevChapter} disabled={!selectedBook || selectedChapter <= 1} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-30">
+                                <ChevronDownIcon className="w-5 h-5 rotate-90" />
+                            </button>
+                            <div className="text-center min-w-[100px]">
+                                <h2 className="text-lg font-bold text-amber-500 font-serif">{selectedBook?.name}</h2>
+                                <p className="text-xs text-slate-400">{selectedChapter}</p>
+                            </div>
+                            <button onClick={handleNextChapter} disabled={!selectedBook || selectedChapter >= (selectedBook.chapters || 0)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-30">
+                                <ChevronDownIcon className="w-5 h-5 -rotate-90" />
+                            </button>
                         </div>
-                        <button onClick={handleNextChapter} disabled={!selectedBook || selectedChapter >= (selectedBook.chapters || 0)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-30">
-                            <ChevronDownIcon className="w-5 h-5 -rotate-90" />
-                        </button>
+                        <div className="flex items-center gap-1 sm:gap-2 bg-white/5 rounded-full p-1 border border-white/5">
+                            <button onClick={decreaseFontSize} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تصغير الخط"><TextDecreaseIcon className="w-4 h-4" /></button>
+                            <button onClick={toggleFontType} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تغيير نوع الخط"><TypefaceIcon className="w-4 h-4" /></button>
+                            <button onClick={increaseFontSize} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تكبير الخط"><TextIncreaseIcon className="w-4 h-4" /></button>
+                            <div className="w-px h-4 bg-white/10 mx-1"></div>
+                            <button onClick={() => setIsFocusMode(!isFocusMode)} className={`p-2 rounded-full transition-colors ${isFocusMode ? 'text-amber-400 bg-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={isFocusMode ? "إنهاء التركيز" : "وضع التركيز"}>
+                                {isFocusMode ? <MinimizeIcon className="w-4 h-4" /> : <MaximizeIcon className="w-4 h-4" />}
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Font & Focus Controls */}
-                    <div className="flex items-center gap-1 sm:gap-2 bg-white/5 rounded-full p-1 border border-white/5">
-                        <button onClick={decreaseFontSize} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تصغير الخط">
-                            <TextDecreaseIcon className="w-4 h-4" />
-                        </button>
-                        <button onClick={toggleFontType} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تغيير نوع الخط">
-                            <TypefaceIcon className="w-4 h-4" />
-                        </button>
-                        <button onClick={increaseFontSize} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10" title="تكبير الخط">
-                            <TextIncreaseIcon className="w-4 h-4" />
-                        </button>
-                        <div className="w-px h-4 bg-white/10 mx-1"></div>
-                        <button onClick={() => setIsFocusMode(!isFocusMode)} className={`p-2 rounded-full transition-colors ${isFocusMode ? 'text-amber-400 bg-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`} title={isFocusMode ? "إنهاء التركيز" : "وضع التركيز"}>
-                            {isFocusMode ? <MinimizeIcon className="w-4 h-4" /> : <MaximizeIcon className="w-4 h-4" />}
-                        </button>
-                    </div>
+                    
+                    {/* Permanent Study Tools (outside Focus Mode) */}
+                    {!isFocusMode && (
+                        <div className="px-2 pt-4">
+                            <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex items-center justify-around gap-2">
+                                <button onClick={fetchSimpleExplanationData} className="flex-1 p-2 rounded-lg hover:bg-green-500/20 text-green-300 hover:text-green-200 transition-colors flex items-center justify-center gap-2 text-sm font-semibold">
+                                    <ChildFaceIcon className="w-5 h-5" /><span>مبسط</span>
+                                </button>
+                                <button onClick={fetchInterpretationData} className="flex-1 p-2 rounded-lg hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 transition-colors flex items-center justify-center gap-2 text-sm font-semibold">
+                                    <InterpretationIcon className="w-5 h-5" /><span>تفسير</span>
+                                </button>
+                                <button onClick={fetchLinguisticAnalysisData} className="flex-1 p-2 rounded-lg hover:bg-sky-500/20 text-sky-300 hover:text-sky-200 transition-colors flex items-center justify-center gap-2 text-sm font-semibold">
+                                    <LanguageIcon className="w-5 h-5" /><span>{originalLabel}</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Text Content */}
                 <div className={`mt-4 mx-auto ${isFocusMode ? 'max-w-3xl' : ''}`}>
                      {isLoadingText ? (
-                        <div className="flex flex-col items-center justify-center h-64 gap-4">
-                            <SpinnerIcon className="w-10 h-10 text-amber-500 animate-spin" />
-                            <p className="text-slate-500">جاري استدعاء النص...</p>
-                        </div>
+                        <div className="flex flex-col items-center justify-center h-64 gap-4"><SpinnerIcon className="w-10 h-10 text-amber-500 animate-spin" /><p className="text-slate-500">جاري استدعاء النص...</p></div>
                      ) : (
                         <div className="flex flex-col space-y-2">
                             {chapterText.map((verse) => {
                                 const isSelected = selectedVerses.includes(verse.number);
                                 return (
-                                    <div 
-                                        key={verse.number} 
-                                        onClick={() => toggleVerseSelection(verse.number)}
-                                        className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 flex gap-4 items-start
-                                            ${isSelected ? 'bg-amber-500/10' : 'hover:bg-white/5'}
-                                        `}
-                                    >
-                                        <span className={`flex-shrink-0 inline-flex items-center justify-center h-6 min-w-[1.5rem] rounded text-xs font-bold mt-1 select-none ${isSelected ? 'bg-amber-500 text-black' : 'text-slate-500 bg-white/5'}`}>
-                                            {verse.number}
-                                        </span>
-                                        <p 
-                                            className={`flex-grow leading-loose transition-colors ${isSelected ? 'text-amber-50' : 'text-slate-200'}`} 
-                                            style={{
-                                                fontSize: `${fontSize}px`,
-                                                fontFamily: fontType === 'naskh' ? '"Noto Naskh Arabic", serif' : '"Cairo", sans-serif',
-                                                lineHeight: 2
-                                            }}
-                                        >
-                                            {verse.text}
-                                        </p>
+                                    <div key={verse.number} onClick={() => toggleVerseSelection(verse.number)} className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 flex gap-4 items-start ${isSelected ? 'bg-amber-500/10' : 'hover:bg-white/5'}`}>
+                                        <span className={`flex-shrink-0 inline-flex items-center justify-center h-6 min-w-[1.5rem] rounded text-xs font-bold mt-1 select-none ${isSelected ? 'bg-amber-500 text-black' : 'text-slate-500 bg-white/5'}`}>{verse.number}</span>
+                                        <p className={`flex-grow leading-loose transition-colors ${isSelected ? 'text-amber-50' : 'text-slate-200'}`} style={{fontSize: `${fontSize}px`, fontFamily: fontType === 'naskh' ? '"Noto Naskh Arabic", serif' : '"Cairo", sans-serif', lineHeight: 2 }}>{verse.text}</p>
                                     </div>
                                 );
                             })}
@@ -443,61 +430,30 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                      )}
                 </div>
 
-                {!isFocusMode && (
-                    <div className="mt-12 text-center pb-8">
-                        <p className="text-xs text-slate-500 font-serif">ترجمة فاندايك - مرجعية موقع St-Takla.org</p>
-                    </div>
-                )}
+                {!isFocusMode && (<div className="mt-12 text-center pb-8"><p className="text-xs text-slate-500 font-serif">ترجمة فاندايك - مرجعية موقع St-Takla.org</p></div>)}
 
-                {/* Floating Action Bar (Sticky at bottom, visible in focus mode) */}
-                {(hasSelection || isFocusMode) && (
-                    <div className={`fixed bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none animate-fade-in-up transition-all duration-300`}>
+                {/* Floating Action Bar (for selection and focus mode) */}
+                {hasSelection && (
+                    <div className="fixed bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none animate-fade-in-up transition-all duration-300">
                         <div className="bg-[#0f172a]/90 backdrop-blur-xl border border-amber-500/30 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] p-2 flex items-center gap-2 pointer-events-auto">
-                            {hasSelection ? (
-                                <>
-                                    <div className="px-3 py-2 border-l border-white/10 text-slate-300 text-sm font-bold">
-                                        <span className="text-amber-400">{selectedVerses.length}</span>
-                                    </div>
-                                    <button onClick={handleCopyVerses} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-colors flex flex-col items-center gap-1 min-w-[50px]">
-                                        <CopyIcon className="w-5 h-5" /><span className="text-[9px]">نسخ</span>
-                                    </button>
-                                    <div className="w-px h-8 bg-white/10"></div>
-                                </>
-                            ) : (
-                                <div className="px-3 text-xs text-slate-500 font-bold hidden sm:block">أدوات الدراسة</div>
-                            )}
-
-                            <button onClick={fetchSimpleExplanationData} className="p-3 rounded-xl hover:bg-green-500/20 text-green-300 hover:text-green-200 transition-colors flex flex-col items-center gap-1 min-w-[60px]" title="شرح مبسط">
-                                <ChildFaceIcon className="w-5 h-5" /><span className="text-[9px]">مبسط</span>
-                            </button>
-
-                            <button onClick={fetchInterpretationData} className="p-3 rounded-xl hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 transition-colors flex flex-col items-center gap-1 min-w-[60px]" title="تفسير عميق">
-                                <InterpretationIcon className="w-5 h-5" /><span className="text-[9px]">تفسير</span>
-                            </button>
-
-                            <button onClick={fetchLinguisticAnalysisData} className="p-3 rounded-xl hover:bg-sky-500/20 text-sky-300 hover:text-sky-200 transition-colors flex flex-col items-center gap-1 min-w-[60px]" title="تحليل لغوي">
-                                <LanguageIcon className="w-5 h-5" /><span className="text-[9px]">{originalLabel}</span>
-                            </button>
-
-                            {hasSelection && (
-                                <button onClick={() => setSelectedVerses([])} className="p-2 ml-1 rounded-full hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors">
-                                    <XMarkIcon className="w-5 h-5" />
-                                </button>
-                            )}
+                            <div className="px-3 py-2 border-l border-white/10 text-slate-300 text-sm font-bold"><span className="text-amber-400">{selectedVerses.length}</span></div>
+                            <button onClick={handleCopyVerses} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-colors flex flex-col items-center gap-1.5 min-w-[60px]"><CopyIcon className="w-6 h-6" /><span className="text-[11px] font-bold">نسخ</span></button>
+                            <div className="w-px h-8 bg-white/10"></div>
+                            <button onClick={fetchSimpleExplanationData} className="p-3 rounded-xl hover:bg-green-500/20 text-green-300 hover:text-green-200 transition-colors flex flex-col items-center gap-1.5 min-w-[60px]"><ChildFaceIcon className="w-6 h-6" /><span className="text-[11px] font-bold">مبسط</span></button>
+                            <button onClick={fetchInterpretationData} className="p-3 rounded-xl hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 transition-colors flex flex-col items-center gap-1.5 min-w-[60px]"><InterpretationIcon className="w-6 h-6" /><span className="text-[11px] font-bold">تفسير</span></button>
+                            <button onClick={fetchLinguisticAnalysisData} className="p-3 rounded-xl hover:bg-sky-500/20 text-sky-300 hover:text-sky-200 transition-colors flex flex-col items-center gap-1.5 min-w-[60px]"><LanguageIcon className="w-6 h-6" /><span className="text-[11px] font-bold">{originalLabel}</span></button>
+                            <button onClick={() => setSelectedVerses([])} className="p-2 ml-1 rounded-full hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors"><XMarkIcon className="w-5 h-5" /></button>
                         </div>
                     </div>
                 )}
-
-                {/* Modals (Interpretation, Simple, Analysis) - Same as before */}
+                
+                {/* Modals are unchanged but are included for completeness */}
                 {showSimpleExplanation && (
                      <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowSimpleExplanation(false)}></div>
                         <div className="relative w-full max-w-2xl h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><ChildFaceIcon className="w-5 h-5 text-green-400" />الشرح المبسط</h3>
-                                    <p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح بالكامل'}</p>
-                                </div>
+                                <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><ChildFaceIcon className="w-5 h-5 text-green-400" />الشرح المبسط</h3><p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح بالكامل'}</p></div>
                                 <div className="flex items-center gap-2">
                                     {simpleExplanationData && <button onClick={() => handleSaveContent(`شرح مبسط: ${selectedBook?.name} ${selectedChapter}`, { type: 'simple-explanation', body: simpleExplanationData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-green-400 hover:bg-green-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
                                     <button onClick={() => setShowSimpleExplanation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
@@ -509,16 +465,12 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                         </div>
                     </div>
                 )}
-
                 {showInterpretation && (
                     <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowInterpretation(false)}></div>
                         <div className="relative w-full max-w-2xl h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><InterpretationIcon className="w-5 h-5 text-purple-400" />التفسير العميق</h3>
-                                    <p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح بالكامل'}</p>
-                                </div>
+                                <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><InterpretationIcon className="w-5 h-5 text-purple-400" />التفسير العميق</h3><p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح بالكامل'}</p></div>
                                 <div className="flex items-center gap-2">
                                     {interpretationData && <button onClick={() => handleSaveContent(`تفسير: ${selectedBook?.name} ${selectedChapter}`, { type: 'interpretation', body: interpretationData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-purple-400 hover:bg-purple-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
                                     <button onClick={() => setShowInterpretation(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
@@ -530,16 +482,12 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                         </div>
                     </div>
                 )}
-
                 {showAnalysis && (
                     <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowAnalysis(false)}></div>
                         <div className="relative w-full max-w-md h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
                             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><LanguageIcon className="w-5 h-5 text-sky-400" />{analysisLabel}</h3>
-                                    <p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح'}</p>
-                                </div>
+                                <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><LanguageIcon className="w-5 h-5 text-sky-400" />{analysisLabel}</h3><p className="text-xs text-slate-400 mt-1">{selectedVerses.length > 0 ? `للآيات: ${selectedVerses.join('، ')}` : 'للأصحاح'}</p></div>
                                 <div className="flex items-center gap-2">
                                     {analysisData.length > 0 && <button onClick={() => handleSaveContent(`تحليل لغوي: ${selectedBook?.name} ${selectedChapter}`, { type: 'linguistic-analysis', body: analysisData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-sky-400 hover:bg-sky-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
                                     <button onClick={() => setShowAnalysis(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
