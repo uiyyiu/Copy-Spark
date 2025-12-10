@@ -1,6 +1,8 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon, ArchiveIcon, LogoutIcon } from './icons';
+import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon, ArchiveIcon, LogoutIcon, UsersIcon } from './icons';
+import { signInWithGoogle } from '../services/supabase';
 
 interface HeaderProps {
     onReset: () => void;
@@ -31,14 +33,15 @@ const Header: React.FC<HeaderProps> = ({
     isSaving, 
     saveSuccess,
     onSignOut, 
-    onOpenSaved, // Destructure onOpenSaved
+    onOpenSaved, 
     isExportingPdf, 
     onOpenInfoModal, 
     user 
 }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // State for profile dropdown
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); 
+    const [isSigningIn, setIsSigningIn] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
     const profileMenuRef = useRef<HTMLDivElement>(null);
     const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -73,6 +76,16 @@ const Header: React.FC<HeaderProps> = ({
         const { outcome } = await installPrompt.userChoice;
         if (outcome === 'accepted') {
             setInstallPrompt(null);
+        }
+    };
+
+    const handleLogin = async () => {
+        setIsSigningIn(true);
+        try {
+            await signInWithGoogle();
+        } catch (error) {
+            console.error("Login failed", error);
+            setIsSigningIn(false);
         }
     };
     
@@ -120,53 +133,65 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center gap-2">
                     <div id="header-actions" className="flex items-center gap-2">
                         
-                        {/* User Profile Dropdown */}
-                        {user && (
-                            <div className="relative ml-2 pl-2 border-l border-white/10" ref={profileMenuRef}>
-                                <button 
-                                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                                    className="flex items-center gap-2 focus:outline-none"
-                                >
-                                    {avatarUrl ? (
-                                        <img src={avatarUrl} alt="User" className="w-9 h-9 rounded-full border border-white/20 hover:border-amber-500/50 transition-colors" />
-                                    ) : (
-                                        <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm border border-amber-500/30 hover:bg-amber-500/30 transition-colors">
-                                            {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                        {/* User Profile / Login */}
+                        <div className="relative ml-2 pl-2 border-l border-white/10">
+                            {user ? (
+                                <div className="relative" ref={profileMenuRef}>
+                                    <button 
+                                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                        className="flex items-center gap-2 focus:outline-none"
+                                    >
+                                        {avatarUrl ? (
+                                            <img src={avatarUrl} alt="User" className="w-9 h-9 rounded-full border border-white/20 hover:border-amber-500/50 transition-colors" />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm border border-amber-500/30 hover:bg-amber-500/30 transition-colors">
+                                                {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                                            </div>
+                                        )}
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {isProfileMenuOpen && (
+                                        <div className="absolute left-0 mt-2 w-48 bg-[#1e293b] rounded-xl shadow-2xl ring-1 ring-white/10 z-50 animate-fade-in-down border border-white/10 p-1">
+                                            <div className="px-4 py-3 border-b border-white/5 mb-1">
+                                                <p className="text-sm text-white font-bold truncate">{fullName}</p>
+                                                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                                            </div>
+                                            
+                                            {onOpenSaved && (
+                                                <button 
+                                                    onClick={() => { onOpenSaved(); setIsProfileMenuOpen(false); }} 
+                                                    className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
+                                                >
+                                                    <ArchiveIcon className="w-4 h-4 text-amber-400" />
+                                                    المحفوظات
+                                                </button>
+                                            )}
+                                            
+                                            {onSignOut && (
+                                                <button 
+                                                    onClick={() => { onSignOut(); setIsProfileMenuOpen(false); }} 
+                                                    className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mt-1"
+                                                >
+                                                    <LogoutIcon className="w-4 h-4" />
+                                                    تسجيل الخروج
+                                                </button>
+                                            )}
                                         </div>
                                     )}
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleLogin}
+                                    disabled={isSigningIn}
+                                    className="flex items-center gap-2 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg px-3 py-2 text-sm font-bold border border-amber-500/30 transition-all"
+                                >
+                                    {isSigningIn ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <UsersIcon className="w-4 h-4" />}
+                                    <span className="hidden sm:inline">تسجيل الدخول</span>
+                                    <span className="sm:hidden">دخول</span>
                                 </button>
-
-                                {/* Dropdown Menu */}
-                                {isProfileMenuOpen && (
-                                    <div className="absolute left-0 mt-2 w-48 bg-[#1e293b] rounded-xl shadow-2xl ring-1 ring-white/10 z-50 animate-fade-in-down border border-white/10 p-1">
-                                        <div className="px-4 py-3 border-b border-white/5 mb-1">
-                                            <p className="text-sm text-white font-bold truncate">{fullName}</p>
-                                            <p className="text-xs text-slate-400 truncate">{user.email}</p>
-                                        </div>
-                                        
-                                        {onOpenSaved && (
-                                            <button 
-                                                onClick={() => { onOpenSaved(); setIsProfileMenuOpen(false); }} 
-                                                className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
-                                            >
-                                                <ArchiveIcon className="w-4 h-4 text-amber-400" />
-                                                المحفوظات
-                                            </button>
-                                        )}
-                                        
-                                        {onSignOut && (
-                                            <button 
-                                                onClick={() => { onSignOut(); setIsProfileMenuOpen(false); }} 
-                                                className="w-full text-right flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mt-1"
-                                            >
-                                                <LogoutIcon className="w-4 h-4" />
-                                                تسجيل الخروج
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                         {/* Mobile Menu Toggle */}
                         <button 

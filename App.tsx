@@ -1,9 +1,8 @@
 
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat } from './services/supabase';
+import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat, signInWithGoogle } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
-import SignInScreen from './components/SignInScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -131,7 +130,14 @@ function App() {
 
   // Handle Saving Lesson Plan to Supabase
   const handleSave = async () => {
-      if (!user || !lessonPlan) return;
+      if (!lessonPlan) return;
+
+      if (!user) {
+          if (confirm("يجب تسجيل الدخول لحفظ الدرس. هل تريد تسجيل الدخول الآن؟")) {
+              await signInWithGoogle();
+          }
+          return;
+      }
       
       const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
 
@@ -247,7 +253,7 @@ function App() {
           const updatedHistory = [...newHistory, { role: 'model' as const, content: response }];
           setPatristicMessages(updatedHistory);
 
-          // Save logic
+          // Save logic - Only if user is logged in
           if (user) {
               if (currentChatId) {
                   // Update existing chat
@@ -430,12 +436,8 @@ function App() {
     );
   }
 
-  // Auth Guard: Not Logged In -> Show SignInScreen
-  if (!user) {
-    return <SignInScreen />;
-  }
+  // NOTE: Removed mandatory Sign In Screen. User is now passed as null if not logged in.
 
-  // Auth Guard: Logged In -> Show App
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-500 overflow-x-hidden`}>
       <div className="fixed inset-0 bg-[#050505]/80 pointer-events-none mix-blend-multiply z-0"></div>

@@ -3,7 +3,7 @@ import { bibleBooks, BibleBook } from '../utils/bibleData';
 import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, getSimplifiedExplanation, BibleVerse, LinguisticAnalysisItem } from '../services/geminiService';
 import { formatTextToHtml } from '../services/exportService';
 import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon, BookmarkIcon, MaximizeIcon, MinimizeIcon, TextIncreaseIcon, TextDecreaseIcon, TypefaceIcon } from './icons';
-import { saveLessonToLibrary } from '../services/supabase';
+import { saveLessonToLibrary, signInWithGoogle } from '../services/supabase';
 
 interface BibleReaderProps {
     isLoading?: boolean;
@@ -62,7 +62,9 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
 
     const handleSaveContent = async (title: string, content: any) => {
         if (!user) {
-            alert("يجب عليك تسجيل الدخول لحفظ المحتوى.");
+            if (confirm("يجب عليك تسجيل الدخول لحفظ المحتوى. هل تريد تسجيل الدخول الآن؟")) {
+                await signInWithGoogle();
+            }
             return;
         }
         
