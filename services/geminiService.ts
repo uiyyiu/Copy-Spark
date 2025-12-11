@@ -7,6 +7,29 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+// --- Retry Logic Helper ---
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000): Promise<any> {
+    try {
+        // Construct the call parameters correctly for the SDK
+        const callParams = { model, ...params };
+        return await ai.models.generateContent(callParams);
+    } catch (error: any) {
+        const status = error.status || error.response?.status;
+        const isNetworkError = error.message?.includes('fetch failed') || error.message?.includes('network');
+        const isServerError = status === 429 || status >= 500;
+
+        if (retries > 0 && (isNetworkError || isServerError)) {
+            console.warn(`Gemini API Error (${status || 'Network'}). Retrying in ${delay}ms...`);
+            await sleep(delay);
+            // Exponential backoff: double the delay for the next retry
+            return generateWithRetry(model, params, retries - 1, delay * 2);
+        }
+        throw error;
+    }
+}
+
 export type SuggestionType = 'title' | 'objective' | 'verse';
 
 const structureIdeas = (ideaSection: { title: string; ideas: string[] }): IdeaSection => {
@@ -116,9 +139,8 @@ export async function generateLessonIdeas(
             requestContents = prompt;
         }
 
-        // Switched to gemini-2.5-flash for speed and reliability on Vercel
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        // Use generateWithRetry instead of direct call
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: requestContents,
             config: {
                 systemInstruction: systemInstruction,
@@ -162,7 +184,7 @@ export async function generateLessonIdeas(
 
     } catch (error) {
         console.error("Error generating lesson ideas:", error);
-        throw new Error("فشل في توليد خطة الدرس. حاول مرة أخرى.");
+        throw new Error("فشل في توليد خطة الدرس. تأكد من الاتصال بالإنترنت.");
     }
 }
 
@@ -184,9 +206,7 @@ export async function generateGameIdeas(count: string, place: string, tools: str
 
         const prompt = `Generate 5 church games in Arabic for: ${count} people, Place: ${place}, Tools: ${tools}, Goal: ${goal}.`;
 
-        // Switched to gemini-2.5-flash
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.9 }
         });
@@ -195,7 +215,7 @@ export async function generateGameIdeas(count: string, place: string, tools: str
         const json = JSON.parse(responseText || "{}");
         return json.games || [];
     } catch (e) {
-        throw new Error("فشل في توليد الألعاب");
+        throw new Error("فشل في توليد الألعاب. حاول مرة أخرى.");
     }
 }
 
@@ -206,8 +226,7 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
             parts: [{ text: message.content }] 
         }));
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: [...historyForApi, { role: 'user', parts: [{ text: newUserQuery }] }],
             config: { systemInstruction: systemInstruction + "\nContext: You are a helpful assistant answering questions about Coptic Orthodox theology and history in Arabic. Use the provided references context." + referencesContext, temperature: 0.3 },
         });
@@ -215,7 +234,7 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
         const responseText = response.text;
         return (responseText || "").trim();
     } catch (error) {
-        throw new Error("Connection failed.");
+        throw new Error("فشل الاتصال. تأكد من الإنترنت.");
     }
 }
 
@@ -234,8 +253,7 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
             parts: [{ text: message.content }] 
         }));
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: [...historyForApi, { role: 'user', parts: [{ text: userMessage }] }],
             config: { systemInstruction: systemPrompt, temperature: 0.5 },
         });
@@ -244,7 +262,7 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
         return (responseText || "").trim();
     } catch (error) {
         console.error("Error in chatWithExplanation:", error);
-        throw new Error("Failed to generate response.");
+        throw new Error("فشل في الرد. حاول مرة أخرى.");
     }
 }
 
@@ -260,37 +278,33 @@ export async function generateAlternativeIdea(
             requestContents = { parts: [...imageParts, { text: prompt }] };
         }
 
-        // Switched to gemini-2.5-flash
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: requestContents,
             config: { temperature: 0.95 }
         });
         const responseText = response.text;
         return (responseText || "").trim();
     } catch (error) {
-        throw new Error("Failed to generate alternative.");
+        throw new Error("فشل في توليد بديل.");
     }
 }
 
 export async function explainIdea(ideaText: string, ageGroup: AgeGroup): Promise<string> {
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: `Explain how to implement this idea in Arabic: "${ideaText}" for age group "${ageGroup}".`,
             config: { temperature: 0.6 }
         });
         const responseText = response.text;
         return (responseText || "").trim();
     } catch (error) {
-        throw new Error("Failed to explain idea.");
+        throw new Error("فشل في شرح الفكرة.");
     }
 }
 
 export async function generateSuggestedQuestions(lessonExplanation: string): Promise<string[]> {
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: `Based on this explanation, generate 3 short follow-up questions in Arabic. Explanation: ${lessonExplanation}`,
             config: { responseMimeType: "application/json", responseSchema: {type: Type.OBJECT, properties: {questions: {type: Type.ARRAY, items: {type: Type.STRING}}}, required: ["questions"]} }
         });
@@ -313,8 +327,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             return [];
         }
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -365,7 +378,6 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
         return bibleCache.get(cacheKey)!;
     }
 
-    // Simplified prompt, instructing simple numbering
     const prompt = `
         Provide the complete Arabic text for: **${bookName} - Chapter ${chapter}**
         Version: **Van Dyck** (فاندايك).
@@ -382,8 +394,7 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 temperature: 0.1,
@@ -396,13 +407,6 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
         const verses: BibleVerse[] = [];
         const lines = responseText.split('\n');
         
-        // Robust State Machine Parser
-        // Handles: 
-        // 1. "1. Text"
-        // 2. "1 Text"
-        // 3. "**1** Text"
-        // 4. "Text continues on next line" (for poetry/long verses)
-        
         let currentVerseNumber = 0;
         let currentVerseText = "";
 
@@ -410,43 +414,27 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
             line = line.trim();
             if (!line) continue;
 
-            // Remove potential markdown bolding on numbers (e.g. **1**)
             const cleanLine = line.replace(/^\*\*(\d+)\*\*/, '$1');
-
-            // Check if line starts with a number
             const match = cleanLine.match(/^(\d+)[\s.:|/-]+(.*)/);
             
             if (match) {
-                // Save previous verse if exists
                 if (currentVerseNumber > 0) {
                     verses.push({ number: currentVerseNumber, text: currentVerseText.trim() });
                 }
-                
-                // Start new verse
                 currentVerseNumber = parseInt(match[1]);
                 currentVerseText = match[2];
             } else {
-                // If it doesn't start with a number, it's likely a continuation of the previous verse
-                // (Common in Psalms, Prophecy, or Sermon on the Mount)
                 if (currentVerseNumber > 0) {
                     currentVerseText += " " + cleanLine;
-                } else {
-                    // Edge case: Text before verse 1 (titles), usually ignore or treat as verse 0
-                    // For now, ignore to keep strict numbering
                 }
             }
         }
 
-        // Push the last verse
         if (currentVerseNumber > 0) {
             verses.push({ number: currentVerseNumber, text: currentVerseText.trim() });
         }
 
-        // Fallback: If regex failed completely (verses is empty but text exists), 
-        // it might be a block of text without numbers.
         if (verses.length === 0 && responseText.length > 50) {
-             // Split by periods or reasonable chunks? Or just return as Verse 1?
-             // Better to return as Verse 1 than nothing.
              verses.push({ number: 1, text: responseText.trim() });
         }
 
@@ -497,8 +485,7 @@ export async function getLinguisticAnalysis(bookName: string, chapter: number, t
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -575,11 +562,10 @@ export async function getChapterInterpretation(bookName: string, chapter: number
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", // Use Flash for stability and speed
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
-                temperature: 0.4, // Lower temperature for factual/theological accuracy
+                temperature: 0.4, 
             }
         });
 
@@ -590,7 +576,7 @@ export async function getChapterInterpretation(bookName: string, chapter: number
 
     } catch (error) {
         console.error("Interpretation failed:", error);
-        throw new Error("فشل في تحميل التفسير العميق.");
+        throw new Error("فشل في تحميل التفسير.");
     }
 }
 
@@ -631,8 +617,7 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 temperature: 0.7, 
@@ -652,19 +637,13 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
 
 // Manuscript types
 export interface ManuscriptInfo {
-    imageUrl: string; // Static representative image
-    viewerUrl: string; // Link to Codex Sinaiticus
+    imageUrl: string; 
+    viewerUrl: string; 
     title: string;
     description: string;
 }
 
 export async function getManuscriptImage(bookName: string, chapter: number): Promise<ManuscriptInfo> {
-    // Note: Codex Sinaiticus contains the whole NT and part of OT.
-    // We will simulate a search or provide a direct deep link logic if possible, 
-    // but usually search grounding is best for specific pages.
-    
-    // For now, we will return a static high-quality image of the Codex and search for the specific link.
-    
     const prompt = `
         Search for the specific URL on codexsinaiticus.org for: ${bookName} Chapter ${chapter}.
         Also provide a detailed historical summary (in Arabic) about Codex Sinaiticus:
@@ -681,8 +660,7 @@ export async function getManuscriptImage(bookName: string, chapter: number): Pro
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 tools: [{ googleSearch: {} }],
@@ -694,14 +672,13 @@ export async function getManuscriptImage(bookName: string, chapter: number): Pro
         const json = JSON.parse(responseText || "{}");
         
         return {
-            imageUrl: "https://www.codexsinaiticus.org/images/home_slider/Codex_Sinaiticus_01.jpg", // Static representative
+            imageUrl: "https://www.codexsinaiticus.org/images/home_slider/Codex_Sinaiticus_01.jpg", 
             viewerUrl: json.viewerUrl || "https://codexsinaiticus.org/en/manuscript.aspx",
             title: json.title || "المخطوطة السينائية (Codex Sinaiticus)",
             description: json.description || "واحدة من أهم المخطوطات اليونانية للعهد الجديد، تعود للقرن الرابع الميلادي."
         };
 
     } catch (e) {
-        // Fallback
         return {
             imageUrl: "https://www.codexsinaiticus.org/images/home_slider/Codex_Sinaiticus_01.jpg",
             viewerUrl: "https://codexsinaiticus.org/en/manuscript.aspx",

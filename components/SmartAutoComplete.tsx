@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getSmartSuggestions, SuggestionType } from '../services/geminiService';
 import { SparklesIcon } from './icons';
 
+// Simple in-memory cache to avoid repeated requests for the same input
+const suggestionsCache: Record<string, string[]> = {};
+
 interface SmartAutoCompleteProps {
     id: string;
     value: string;
@@ -40,13 +43,28 @@ const SmartAutoComplete: React.FC<SmartAutoCompleteProps> = ({
     // Debounce logic
     useEffect(() => {
         const timer = setTimeout(async () => {
+            // Increased delay to 2000ms to save API quota (Rate Limit Optimization)
             if (value.trim().length >= 3 && showSuggestions) {
+                const cacheKey = `${type}:${context}:${value.trim().toLowerCase()}`;
+                
+                // Check cache first
+                if (suggestionsCache[cacheKey]) {
+                    setSuggestions(suggestionsCache[cacheKey]);
+                    return;
+                }
+
                 setIsLoading(true);
-                const results = await getSmartSuggestions(type, value, context);
-                setSuggestions(results);
-                setIsLoading(false);
+                try {
+                    const results = await getSmartSuggestions(type, value, context);
+                    suggestionsCache[cacheKey] = results; // Save to cache
+                    setSuggestions(results);
+                } catch (error) {
+                    console.error("Failed to fetch suggestions", error);
+                } finally {
+                    setIsLoading(false);
+                }
             }
-        }, 800); // 800ms delay
+        }, 2000); // 2 seconds delay
 
         return () => clearTimeout(timer);
     }, [value, type, context, showSuggestions]);
@@ -79,8 +97,13 @@ const SmartAutoComplete: React.FC<SmartAutoCompleteProps> = ({
     };
     
     const handleInputFocus = () => {
-        if (value.trim().length >= 3 && suggestions.length > 0) {
-            setShowSuggestions(true);
+        if (value.trim().length >= 3) {
+             const cacheKey = `${type}:${context}:${value.trim().toLowerCase()}`;
+             // If we have it in cache, show immediately without waiting
+             if (suggestionsCache[cacheKey]) {
+                 setSuggestions(suggestionsCache[cacheKey]);
+             }
+             setShowSuggestions(true);
         }
     };
 
