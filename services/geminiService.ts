@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
 
@@ -17,10 +18,12 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
         return await ai.models.generateContent(callParams);
     } catch (error: any) {
         const status = error.status || error.response?.status;
+        // Check for Rate Limit (429) or Service Unavailable (503) or generic Network errors
+        const isRateLimit = status === 429;
+        const isServerBusy = status === 503;
         const isNetworkError = error.message?.includes('fetch failed') || error.message?.includes('network');
-        const isServerError = status === 429 || status >= 500;
 
-        if (retries > 0 && (isNetworkError || isServerError)) {
+        if (retries > 0 && (isRateLimit || isServerBusy || isNetworkError)) {
             console.warn(`Gemini API Error (${status || 'Network'}). Retrying in ${delay}ms...`);
             await sleep(delay);
             // Exponential backoff: double the delay for the next retry
@@ -148,7 +151,7 @@ export async function generateLessonIdeas(
                 responseSchema: lessonPlanSchema,
                 temperature: 0.85, 
             },
-        });
+        }, 3, 3000); // Higher retry delay for large generation
 
         const responseText = response.text;
         const jsonText = (responseText || "").trim();
@@ -184,7 +187,7 @@ export async function generateLessonIdeas(
 
     } catch (error) {
         console.error("Error generating lesson ideas:", error);
-        throw new Error("فشل في توليد خطة الدرس. تأكد من الاتصال بالإنترنت.");
+        throw new Error("فشل في توليد خطة الدرس. قد يكون الضغط عالياً، يرجى المحاولة بعد قليل.");
     }
 }
 
@@ -327,6 +330,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             return [];
         }
 
+        // Lower retry count for autocomplete to avoid lag
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
@@ -342,7 +346,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
                     required: ["suggestions"]
                 }
             }
-        });
+        }, 1, 1000); // Retry only once for autocomplete
         
         const responseText = response.text;
         const json = JSON.parse(responseText || "{}");
