@@ -2,33 +2,64 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safely initialize the client.
+const apiKey = process.env.API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey: apiKey }) : null;
 
 // --- Retry Logic Helper ---
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000): Promise<any> {
+async function generateWithRetry(model: string, params: any, retries = 5, delay = 2000): Promise<any> {
+    if (!ai) {
+        throw new Error("مفتاح API غير موجود. يرجى إضافته (API_KEY) في إعدادات Vercel ثم إعادة النشر (Redeploy).");
+    }
+
     try {
         // Construct the call parameters correctly for the SDK
         const callParams = { model, ...params };
         return await ai.models.generateContent(callParams);
     } catch (error: any) {
         const status = error.status || error.response?.status;
-        // Check for Rate Limit (429) or Service Unavailable (503) or generic Network errors
-        const isRateLimit = status === 429;
-        const isServerBusy = status === 503;
-        const isNetworkError = error.message?.includes('fetch failed') || error.message?.includes('network');
+        const message = error.message || '';
 
-        if (retries > 0 && (isRateLimit || isServerBusy || isNetworkError)) {
-            console.warn(`Gemini API Error (${status || 'Network'}). Retrying in ${delay}ms...`);
-            await sleep(delay);
-            // Exponential backoff: double the delay for the next retry
-            return generateWithRetry(model, params, retries - 1, delay * 2);
+        // Permanent Errors (No Retry)
+        if (status === 400 && message.includes('API key')) {
+            throw new Error("مفتاح API غير صالح. تأكد من صحة المفتاح.");
         }
+        if (status === 403) {
+            throw new Error("تم رفض الوصول (403). قد يكون المفتاح محظوراً أو الدولة غير مدعومة.");
+        }
+
+        // Retryable Errors: 
+        // 429 (Rate Limit), 503 (Overloaded), 500+ (Internal), Network Errors
+        const isRateLimit = status === 429;
+        const isServerOverloaded = status === 503;
+        const isInternalError = status >= 500;
+        const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
+
+        if (retries > 0 && (isRateLimit || isServerOverloaded || isInternalError || isNetworkError)) {
+            // Smart Wait: Wait longer if it's a rate limit or overload
+            const waitTime = (isRateLimit || isServerOverloaded) ? delay * 1.5 : delay;
+            
+            console.warn(`Gemini API Warning: ${status || 'Network Error'}. Retrying in ${Math.round(waitTime)}ms... (Attempts left: ${retries})`);
+            await sleep(waitTime);
+            
+            // Exponential backoff: double the delay for the next retry
+            return generateWithRetry(model, params, retries - 1, waitTime * 2);
+        }
+        
+        // Final Friendly Error Messages after exhausting retries
+        if (isRateLimit) {
+            throw new Error("عفواً، الخدمة مشغولة جداً (Rate Limit). تم تجاوز الحد المسموح، حاول مرة أخرى بعد دقيقة.");
+        }
+        if (isServerOverloaded) {
+            throw new Error("سيرفرات جوجل تواجه ضغطاً عالياً حالياً (503). يرجى المحاولة لاحقاً.");
+        }
+        if (isNetworkError) {
+            throw new Error("فشل الاتصال بالإنترنت. يرجى التحقق من الشبكة.");
+        }
+        
+        // Fallback for other errors
         throw error;
     }
 }
@@ -142,7 +173,8 @@ export async function generateLessonIdeas(
             requestContents = prompt;
         }
 
-        // Use generateWithRetry instead of direct call
+        // Use generateWithRetry instead of direct call. 
+        // Initial delay 2000ms, retries 5 times.
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: requestContents,
             config: {
@@ -151,7 +183,7 @@ export async function generateLessonIdeas(
                 responseSchema: lessonPlanSchema,
                 temperature: 0.85, 
             },
-        }, 3, 3000); // Higher retry delay for large generation
+        }, 5, 2000); 
 
         const responseText = response.text;
         const jsonText = (responseText || "").trim();
@@ -185,9 +217,9 @@ export async function generateLessonIdeas(
 
         return lessonPlan;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating lesson ideas:", error);
-        throw new Error("فشل في توليد خطة الدرس. قد يكون الضغط عالياً، يرجى المحاولة بعد قليل.");
+        throw new Error(error.message || "فشل في توليد خطة الدرس. قد يكون الضغط عالياً، يرجى المحاولة بعد قليل.");
     }
 }
 
@@ -217,8 +249,8 @@ export async function generateGameIdeas(count: string, place: string, tools: str
         const responseText = response.text;
         const json = JSON.parse(responseText || "{}");
         return json.games || [];
-    } catch (e) {
-        throw new Error("فشل في توليد الألعاب. حاول مرة أخرى.");
+    } catch (e: any) {
+        throw new Error(e.message || "فشل في توليد الألعاب. حاول مرة أخرى.");
     }
 }
 
@@ -236,8 +268,8 @@ export async function chatWithPatristicAI(chatHistory: ChatMessage[], newUserQue
 
         const responseText = response.text;
         return (responseText || "").trim();
-    } catch (error) {
-        throw new Error("فشل الاتصال. تأكد من الإنترنت.");
+    } catch (error: any) {
+        throw new Error(error.message || "فشل الاتصال. تأكد من الإنترنت.");
     }
 }
 
@@ -263,9 +295,9 @@ export async function chatWithExplanation(lessonContext: string, chatHistory: Ch
 
         const responseText = response.text;
         return (responseText || "").trim();
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error in chatWithExplanation:", error);
-        throw new Error("فشل في الرد. حاول مرة أخرى.");
+        throw new Error(error.message || "فشل في الرد. حاول مرة أخرى.");
     }
 }
 
@@ -287,8 +319,8 @@ export async function generateAlternativeIdea(
         });
         const responseText = response.text;
         return (responseText || "").trim();
-    } catch (error) {
-        throw new Error("فشل في توليد بديل.");
+    } catch (error: any) {
+        throw new Error(error.message || "فشل في توليد بديل.");
     }
 }
 
@@ -300,8 +332,8 @@ export async function explainIdea(ideaText: string, ageGroup: AgeGroup): Promise
         });
         const responseText = response.text;
         return (responseText || "").trim();
-    } catch (error) {
-        throw new Error("فشل في شرح الفكرة.");
+    } catch (error: any) {
+        throw new Error(error.message || "فشل في شرح الفكرة.");
     }
 }
 
@@ -330,7 +362,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             return [];
         }
 
-        // Lower retry count for autocomplete to avoid lag
+        // Lower retry count for autocomplete to avoid UI lag, but still retry once
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
@@ -346,7 +378,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
                     required: ["suggestions"]
                 }
             }
-        }, 1, 1000); // Retry only once for autocomplete
+        }, 2, 1000); 
         
         const responseText = response.text;
         const json = JSON.parse(responseText || "{}");
@@ -405,7 +437,7 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
                 // Increase token limit for long chapters like Matt 6, Luke 6, Psalm 119
                 maxOutputTokens: 8192, 
             }
-        });
+        }, 5, 2000); // 5 retries for bible text
 
         const responseText = response.text || "";
         const verses: BibleVerse[] = [];
@@ -445,9 +477,9 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
         bibleCache.set(cacheKey, verses);
         return verses;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Bible text fetch failed:", error);
-        throw new Error("فشل في تحميل نص الكتاب المقدس. تأكد من الاتصال بالإنترنت وحاول مرة أخرى.");
+        throw new Error(error.message || "فشل في تحميل نص الكتاب المقدس.");
     }
 }
 
@@ -521,9 +553,9 @@ export async function getLinguisticAnalysis(bookName: string, chapter: number, t
         linguisticAnalysisCache.set(cacheKey, results);
         return results;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Linguistic analysis failed:", error);
-        throw new Error("فشل في تحليل الأصول اللغوية.");
+        throw new Error(error.message || "فشل في تحليل الأصول اللغوية.");
     }
 }
 
@@ -578,9 +610,9 @@ export async function getChapterInterpretation(bookName: string, chapter: number
         interpretationCache.set(cacheKey, text);
         return text;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Interpretation failed:", error);
-        throw new Error("فشل في تحميل التفسير.");
+        throw new Error(error.message || "فشل في تحميل التفسير.");
     }
 }
 
@@ -633,9 +665,9 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
         simplifiedExplanationCache.set(cacheKey, text);
         return text;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Simplified explanation failed:", error);
-        throw new Error("فشل في تحميل الشرح المبسط.");
+        throw new Error(error.message || "فشل في تحميل الشرح المبسط.");
     }
 }
 
