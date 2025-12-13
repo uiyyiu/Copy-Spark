@@ -9,7 +9,8 @@ const ai = apiKey ? new GoogleGenAI({ apiKey: apiKey }) : null;
 // --- Retry Logic Helper ---
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function generateWithRetry(model: string, params: any, retries = 5, delay = 2000): Promise<any> {
+// Changed defaults: retries 5 -> 2, delay 2000 -> 1000 for faster feedback
+async function generateWithRetry(model: string, params: any, retries = 2, delay = 1000): Promise<any> {
     if (!ai) {
         throw new Error("مفتاح API غير موجود. يرجى إضافته (API_KEY) في إعدادات Vercel ثم إعادة النشر (Redeploy).");
     }
@@ -38,19 +39,19 @@ async function generateWithRetry(model: string, params: any, retries = 5, delay 
         const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
 
         if (retries > 0 && (isRateLimit || isServerOverloaded || isInternalError || isNetworkError)) {
-            // Smart Wait: Wait longer if it's a rate limit or overload
+            // Smart Wait: Wait slightly longer if it's a rate limit, but keep it snappy
             const waitTime = (isRateLimit || isServerOverloaded) ? delay * 1.5 : delay;
             
             console.warn(`Gemini API Warning: ${status || 'Network Error'}. Retrying in ${Math.round(waitTime)}ms... (Attempts left: ${retries})`);
             await sleep(waitTime);
             
-            // Exponential backoff: double the delay for the next retry
+            // Exponential backoff
             return generateWithRetry(model, params, retries - 1, waitTime * 2);
         }
         
         // Final Friendly Error Messages after exhausting retries
         if (isRateLimit) {
-            throw new Error("عفواً، الخدمة مشغولة جداً (Rate Limit). تم تجاوز الحد المسموح، حاول مرة أخرى بعد دقيقة.");
+            throw new Error("عفواً، الخدمة مشغولة جداً (Rate Limit). حاول مرة أخرى بعد قليل.");
         }
         if (isServerOverloaded) {
             throw new Error("سيرفرات جوجل تواجه ضغطاً عالياً حالياً (503). يرجى المحاولة لاحقاً.");
@@ -174,7 +175,7 @@ export async function generateLessonIdeas(
         }
 
         // Use generateWithRetry instead of direct call. 
-        // Initial delay 2000ms, retries 5 times.
+        // Initial delay 2000ms, retries 3 times.
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: requestContents,
             config: {
@@ -183,7 +184,7 @@ export async function generateLessonIdeas(
                 responseSchema: lessonPlanSchema,
                 temperature: 0.85, 
             },
-        }, 5, 2000); 
+        }, 3, 2000); 
 
         const responseText = response.text;
         const jsonText = (responseText || "").trim();
@@ -378,7 +379,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
                     required: ["suggestions"]
                 }
             }
-        }, 2, 1000); 
+        }, 1, 1000); 
         
         const responseText = response.text;
         const json = JSON.parse(responseText || "{}");
@@ -434,12 +435,17 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
             contents: prompt,
             config: {
                 temperature: 0.1,
-                // Increase token limit for long chapters like Matt 6, Luke 6, Psalm 119
-                maxOutputTokens: 8192, 
+                // Removed maxOutputTokens to prevent conflicts and early cut-offs
             }
-        }, 5, 2000); // 5 retries for bible text
+        }, 2, 1000); // Retries reduced to 2, delay to 1000ms
 
-        const responseText = response.text || "";
+        const responseText = response.text;
+        
+        // Critical: Check for empty or whitespace-only response
+        if (!responseText || !responseText.trim()) {
+             throw new Error("لم يتم استلام أي نص من الخادم. يرجى المحاولة مرة أخرى.");
+        }
+
         const verses: BibleVerse[] = [];
         const lines = responseText.split('\n');
         
