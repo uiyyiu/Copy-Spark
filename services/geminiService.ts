@@ -9,14 +9,15 @@ const ai = apiKey ? new GoogleGenAI({ apiKey: apiKey }) : null;
 // --- Retry Logic Helper ---
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Changed defaults: retries 5 -> 2, delay 2000 -> 1000 for faster feedback
-async function generateWithRetry(model: string, params: any, retries = 2, delay = 1000): Promise<any> {
+// RESTORED: Robust logic. 
+// Fast retries (1s) cause immediate fail on Rate Limits. 
+// We need to wait longer (2000ms) to let the quota reset.
+async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000): Promise<any> {
     if (!ai) {
         throw new Error("مفتاح API غير موجود. يرجى إضافته (API_KEY) في إعدادات Vercel ثم إعادة النشر (Redeploy).");
     }
 
     try {
-        // Construct the call parameters correctly for the SDK
         const callParams = { model, ...params };
         return await ai.models.generateContent(callParams);
     } catch (error: any) {
@@ -32,35 +33,34 @@ async function generateWithRetry(model: string, params: any, retries = 2, delay 
         }
 
         // Retryable Errors: 
-        // 429 (Rate Limit), 503 (Overloaded), 500+ (Internal), Network Errors
+        // 429 (Rate Limit) needs patience. 503 (Overloaded) needs patience.
         const isRateLimit = status === 429;
         const isServerOverloaded = status === 503;
         const isInternalError = status >= 500;
         const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
 
         if (retries > 0 && (isRateLimit || isServerOverloaded || isInternalError || isNetworkError)) {
-            // Smart Wait: Wait slightly longer if it's a rate limit, but keep it snappy
-            const waitTime = (isRateLimit || isServerOverloaded) ? delay * 1.5 : delay;
+            // If Rate Limited, waiting 1s is not enough. We double the delay.
+            const waitTime = (isRateLimit || isServerOverloaded) ? delay * 2 : delay;
             
-            console.warn(`Gemini API Warning: ${status || 'Network Error'}. Retrying in ${Math.round(waitTime)}ms... (Attempts left: ${retries})`);
+            console.warn(`Gemini API Warning: ${status || 'Network'}. Retrying in ${waitTime}ms... (Attempts left: ${retries})`);
             await sleep(waitTime);
             
-            // Exponential backoff
-            return generateWithRetry(model, params, retries - 1, waitTime * 2);
+            // Exponential backoff: Next retry will wait even longer
+            return generateWithRetry(model, params, retries - 1, waitTime);
         }
         
-        // Final Friendly Error Messages after exhausting retries
+        // Final Friendly Error Messages
         if (isRateLimit) {
-            throw new Error("عفواً، الخدمة مشغولة جداً (Rate Limit). حاول مرة أخرى بعد قليل.");
+            throw new Error("عفواً، الخدمة مزدحمة جداً (Rate Limit). يرجى الانتظار قليلاً والمحاولة مرة أخرى.");
         }
         if (isServerOverloaded) {
-            throw new Error("سيرفرات جوجل تواجه ضغطاً عالياً حالياً (503). يرجى المحاولة لاحقاً.");
+            throw new Error("سيرفرات جوجل مشغولة حالياً (503). الخدمة تواجه ضغطاً عالياً.");
         }
         if (isNetworkError) {
             throw new Error("فشل الاتصال بالإنترنت. يرجى التحقق من الشبكة.");
         }
         
-        // Fallback for other errors
         throw error;
     }
 }
@@ -174,8 +174,7 @@ export async function generateLessonIdeas(
             requestContents = prompt;
         }
 
-        // Use generateWithRetry instead of direct call. 
-        // Initial delay 2000ms, retries 3 times.
+        // Lesson generation is heavy, so we use max retries (3) and long delay (2000ms)
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: requestContents,
             config: {
@@ -190,7 +189,6 @@ export async function generateLessonIdeas(
         const jsonText = (responseText || "").trim();
         const parsedData = JSON.parse(jsonText || "{}");
         
-        // Construct legacy explanation for backward compatibility
         const combinedExplanation = `
         **اولا العناصر:**
         ${parsedData.lessonElements?.map((e: string) => `- ${e}`).join('\n') || ''}
@@ -252,6 +250,77 @@ export async function generateGameIdeas(count: string, place: string, tools: str
         return json.games || [];
     } catch (e: any) {
         throw new Error(e.message || "فشل في توليد الألعاب. حاول مرة أخرى.");
+    }
+}
+
+export interface CurriculumLesson {
+    week: number;
+    title: string;
+    scripture: string;
+    summary: string;
+    linkToObjective: string;
+    activityIdea: string;
+}
+
+export async function generateCurriculum(
+    objective: string,
+    duration: number,
+    ageGroup: string,
+    notes: string
+): Promise<CurriculumLesson[]> {
+    try {
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                lessons: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            week: { type: Type.INTEGER },
+                            title: { type: Type.STRING },
+                            scripture: { type: Type.STRING },
+                            summary: { type: Type.STRING },
+                            linkToObjective: { type: Type.STRING },
+                            activityIdea: { type: Type.STRING }
+                        },
+                        required: ["week", "title", "scripture", "summary", "linkToObjective", "activityIdea"]
+                    }
+                }
+            }
+        };
+
+        const prompt = `
+        Role: Expert Coptic Orthodox Sunday School Coordinator.
+        Task: Create a cohesive ${duration}-week lesson series (curriculum) for Age Group: "${ageGroup}".
+        Main Spiritual Objective: "${objective}".
+        Additional Notes: "${notes}".
+
+        Constraint: 
+        1. Every lesson MUST be based on a Bible Story or Passage (Old or New Testament).
+        2. All lessons must be interconnected and serve the Main Spiritual Objective.
+        3. Language: Arabic.
+
+        Output JSON structure:
+        - week: Lesson number.
+        - title: Attractive Title.
+        - scripture: Bible Reference (e.g., Luke 15:11-32).
+        - summary: Brief summary of the story/content.
+        - linkToObjective: How this specific story teaches the main objective.
+        - activityIdea: A simple activity or interaction for this lesson.
+        `;
+
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.8 }
+        });
+
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
+        return json.lessons || [];
+
+    } catch (e: any) {
+        throw new Error(e.message || "فشل في إعداد المنهج. حاول مرة أخرى.");
     }
 }
 
@@ -363,7 +432,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             return [];
         }
 
-        // Lower retry count for autocomplete to avoid UI lag, but still retry once
+        // Suggestions should be fast, so less retry/delay
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
@@ -431,17 +500,16 @@ export async function getBibleChapterText(bookName: string, chapter: number): Pr
     `;
 
     try {
+        // Retries set to 3 and delay to 2000ms for robustness against Rate Limits
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
                 temperature: 0.1,
-                // Removed maxOutputTokens to prevent conflicts and early cut-offs
             }
-        }, 2, 1000); // Retries reduced to 2, delay to 1000ms
+        }, 3, 2000); 
 
         const responseText = response.text;
         
-        // Critical: Check for empty or whitespace-only response
         if (!responseText || !responseText.trim()) {
              throw new Error("لم يتم استلام أي نص من الخادم. يرجى المحاولة مرة أخرى.");
         }

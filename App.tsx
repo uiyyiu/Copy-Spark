@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat, signInWithGoogle } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
@@ -7,7 +8,7 @@ import ResultsDisplay from './components/ResultsDisplay';
 import Modal from './components/Modal';
 import ChatInterface from './components/ChatInterface';
 import type { LessonPlan, Idea, IdeaSectionKey, AgeGroup, ChatMessage } from './types';
-import { generateLessonIdeas, generateAlternativeIdea, explainIdea, generateSuggestedQuestions, generateGameIdeas, chatWithPatristicAI } from './services/geminiService';
+import { generateLessonIdeas, generateAlternativeIdea, explainIdea, generateSuggestedQuestions, generateGameIdeas, chatWithPatristicAI, generateCurriculum, CurriculumLesson } from './services/geminiService';
 import { parseLessonExplanation } from './services/exportService';
 import Step1Basics from './components/Step1Basics';
 import Step2Details from './components/Step2Details';
@@ -15,11 +16,13 @@ import ProgressIndicator from './components/ProgressIndicator';
 import IntroScreen from './components/IntroScreen';
 import ToolsDashboard, { ToolId } from './components/ToolsDashboard';
 import GameBankForm from './components/GameBankForm';
+import CurriculumBuilderForm from './components/CurriculumBuilderForm';
 import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
-import SavedItemsModal from './components/SavedItemsModal'; 
+import SavedItemsModal from './components/SavedItemsModal';
+import { BookOpenIcon, TargetIcon } from './components/icons'; 
 
 const initialFormData = {
     lessonTitle: '',
@@ -44,6 +47,7 @@ function App() {
   // Result States
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
   const [gameResults, setGameResults] = useState<any[] | null>(null);
+  const [curriculumResults, setCurriculumResults] = useState<CurriculumLesson[] | null>(null);
   
   // Chat State for Patristic Assistant
   const [patristicMessages, setPatristicMessages] = useState<ChatMessage[]>([]);
@@ -115,6 +119,7 @@ function App() {
     setFormData(initialFormData);
     setLessonPlan(null);
     setGameResults(null);
+    setCurriculumResults(null);
     setPatristicMessages([]);
     setCurrentChatId(null); // Reset active chat
     setError(null);
@@ -128,9 +133,6 @@ function App() {
 
   // Handle Saving Lesson Plan to Supabase
   const handleSave = async () => {
-      if (!lessonPlan) return;
-
-      // Guest handling: Prompt for login if not authenticated
       if (!user) {
           if (confirm("يجب تسجيل الدخول لحفظ الدرس في مكتبتك.\nهل تريد تسجيل الدخول الآن؟")) {
               await signInWithGoogle();
@@ -139,11 +141,23 @@ function App() {
       }
       
       const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
+      let titleToSave = "";
+      let contentToSave = null;
+
+      if (lessonPlan) {
+          titleToSave = formData.lessonTitle;
+          contentToSave = lessonPlan;
+      } else if (curriculumResults) {
+          titleToSave = `خطة منهج: ${curriculumResults[0]?.linkToObjective || 'بدون عنوان'}`;
+          contentToSave = { lessonBody: JSON.stringify(curriculumResults) }; // Wrap in expected structure
+      } else {
+          return;
+      }
 
       setIsSaving(true);
       setError(null);
       try {
-          await saveLessonToLibrary(user.id, formData.lessonTitle, lessonPlan, userName);
+          await saveLessonToLibrary(user.id, titleToSave, contentToSave, userName);
           setSaveSuccess(true);
           setTimeout(() => setSaveSuccess(false), 3000); 
       } catch (err: any) {
@@ -208,6 +222,20 @@ function App() {
           setGameResults(games);
       } catch (err) {
           setError('حدث خطأ');
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
+  const handleCurriculumSubmit = async (objective: string, duration: number, ageGroup: AgeGroup, notes: string) => {
+      setIsLoading(true);
+      setCurriculumResults(null);
+      setError(null);
+      try {
+          const results = await generateCurriculum(objective, duration, ageGroup, notes);
+          setCurriculumResults(results);
+      } catch (err: any) {
+          setError(err.message || 'حدث خطأ في توليد المنهج');
       } finally {
           setIsLoading(false);
       }
@@ -387,7 +415,7 @@ function App() {
                   <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
                        {/* Game Results Display */}
                        {gameResults.map((game: any, index: number) => (
-                           <div key={index} className="glass-card p-6 rounded-2xl">
+                           <div key={index} className="glass-card p-6 rounded-2xl border border-green-500/20">
                                <h3 className="text-xl font-bold text-white mb-2">{game.title}</h3>
                                <p className="text-slate-300 mb-4">{game.description}</p>
                                <div className="bg-white/5 p-4 rounded-lg">
@@ -401,6 +429,63 @@ function App() {
               );
           }
           return <GameBankForm onSubmit={handleGamesSubmit} isLoading={isLoading} />;
+      }
+
+      if (selectedTool === 'curriculum-builder') {
+          if (isLoading) return <LoadingSpinner />;
+          if (curriculumResults) {
+              return (
+                  <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                      <div className="text-center mb-8">
+                          <h2 className="text-3xl font-bold text-white mb-2">الخطة المقترحة</h2>
+                          <p className="text-purple-300">سلسلة مترابطة لخدمة الهدف الروحي</p>
+                      </div>
+                      
+                      <div className="relative border-r-2 border-purple-500/30 mr-4 md:mr-0 space-y-8">
+                          {curriculumResults.map((lesson, index) => (
+                              <div key={index} className="relative pr-8">
+                                  {/* Timeline Dot */}
+                                  <div className="absolute top-0 right-[-9px] w-4 h-4 bg-purple-500 rounded-full border-4 border-[#0f172a]"></div>
+                                  
+                                  <div className="glass-card p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/50 transition-all">
+                                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                                          <div>
+                                              <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-xs font-bold mb-2">الأسبوع {lesson.week}</span>
+                                              <h3 className="text-xl font-bold text-white">{lesson.title}</h3>
+                                          </div>
+                                          <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-lg border border-white/5">
+                                              <BookOpenIcon className="w-4 h-4 text-amber-400" />
+                                              <span className="text-sm text-slate-300 font-serif" dir="ltr">{lesson.scripture}</span>
+                                          </div>
+                                      </div>
+                                      
+                                      <p className="text-slate-300 mb-4 leading-relaxed">{lesson.summary}</p>
+                                      
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                          <div className="bg-white/5 p-3 rounded-lg">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                  <TargetIcon className="w-4 h-4 text-purple-400" />
+                                                  <span className="text-xs font-bold text-slate-400">الرابط بالهدف</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300">{lesson.linkToObjective}</p>
+                                          </div>
+                                          <div className="bg-white/5 p-3 rounded-lg">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                  <div className="w-4 h-4 text-green-400">⚡</div>
+                                                  <span className="text-xs font-bold text-slate-400">نشاط مقترح</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300">{lesson.activityIdea}</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                      <button onClick={() => setCurriculumResults(null)} className="w-full py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors">عودة</button>
+                  </div>
+              );
+          }
+          return <CurriculumBuilderForm onSubmit={handleCurriculumSubmit} isLoading={isLoading} />;
       }
 
       if (selectedTool === 'patristic-assistant') {
@@ -438,11 +523,11 @@ function App() {
           <>
             <Header 
                 onReset={handleReset} 
-                showActions={!!lessonPlan}
+                showActions={!!lessonPlan || !!curriculumResults}
                 onPrint={handlePrint}
                 onExport={handleExport}
                 onExportPdf={handleExportPdf}
-                onSave={lessonPlan ? handleSave : undefined}
+                onSave={(lessonPlan || curriculumResults) ? handleSave : undefined}
                 isSaving={isSaving}
                 saveSuccess={saveSuccess}
                 isExportingPdf={isExportingPdf}

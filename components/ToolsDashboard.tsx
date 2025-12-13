@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import { NoteIcon, StadiumIcon, ScrollIcon, BookOpenIcon, SunIcon, MoonIcon, SparklesIcon } from './icons';
+import { NoteIcon, StadiumIcon, ScrollIcon, BookOpenIcon, SunIcon, MoonIcon, SparklesIcon, TargetIcon } from './icons';
 
-export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader';
+export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader' | 'curriculum-builder';
 
 interface ToolsDashboardProps {
     onSelectTool: (tool: ToolId) => void;
@@ -67,6 +67,16 @@ const ToolsDashboard: React.FC<ToolsDashboardProps> = ({ onSelectTool, user }) =
             bgGradient: 'from-orange-500/20 to-orange-900/20',
             hoverBorder: 'hover:border-orange-500/50',
             image: 'https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=1000&auto=format&fit=crop'
+        },
+        {
+            id: 'curriculum-builder' as ToolId,
+            title: 'مخطط المنهج',
+            description: 'إعداد سلسلة دروس متكاملة تغطي هدفاً روحياً واحداً (شهر أو أكثر).',
+            icon: TargetIcon,
+            color: 'text-purple-400',
+            bgGradient: 'from-purple-500/20 to-purple-900/20',
+            hoverBorder: 'hover:border-purple-500/50',
+            image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1000&auto=format&fit=crop'
         },
         {
             id: 'game-bank' as ToolId,
