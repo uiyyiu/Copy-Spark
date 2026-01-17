@@ -2,9 +2,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
 
-// Safely initialize the client.
-const apiKey = process.env.API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey: apiKey }) : null;
+// Helper to get the AI client dynamically.
+// This allows switching between the system key and the user's custom key.
+const getGenAI = (): GoogleGenAI | null => {
+    const userKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_gemini_key') : null;
+    const keyToUse = userKey && userKey.length > 10 ? userKey : process.env.API_KEY;
+    
+    if (!keyToUse) return null;
+    return new GoogleGenAI({ apiKey: keyToUse });
+};
 
 // --- Retry Logic Helper ---
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -13,8 +19,9 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Fast retries (1s) cause immediate fail on Rate Limits. 
 // We need to wait longer (2000ms) to let the quota reset.
 async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000): Promise<any> {
+    const ai = getGenAI();
     if (!ai) {
-        throw new Error("مفتاح API غير موجود. يرجى إضافته (API_KEY) في إعدادات Vercel ثم إعادة النشر (Redeploy).");
+        throw new Error("مفتاح API غير موجود. يرجى إضافته في الإعدادات.");
     }
 
     try {
@@ -26,7 +33,12 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
 
         // Permanent Errors (No Retry)
         if (status === 400 && message.includes('API key')) {
-            throw new Error("مفتاح API غير صالح. تأكد من صحة المفتاح.");
+            // Check if it was a user key that failed
+            const isUserKey = typeof localStorage !== 'undefined' && localStorage.getItem('user_gemini_key');
+            if (isUserKey) {
+                 throw new Error("مفتاح API الشخصي الذي أدخلته غير صالح. يرجى التحقق منه في الإعدادات.");
+            }
+            throw new Error("مفتاح API غير صالح.");
         }
         if (status === 403) {
             throw new Error("تم رفض الوصول (403). قد يكون المفتاح محظوراً أو الدولة غير مدعومة.");
@@ -52,7 +64,7 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
         
         // Final Friendly Error Messages
         if (isRateLimit) {
-            throw new Error("عفواً، الخدمة مزدحمة جداً (Rate Limit). يرجى الانتظار قليلاً والمحاولة مرة أخرى.");
+            throw new Error("عفواً، الخدمة مزدحمة جداً (Rate Limit). يمكنك إضافة مفتاح API خاص بك في الإعدادات لتجنب هذا الانتظار.");
         }
         if (isServerOverloaded) {
             throw new Error("سيرفرات جوجل مشغولة حالياً (503). الخدمة تواجه ضغطاً عالياً.");
@@ -432,7 +444,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
             return [];
         }
 
-        // Suggestions should be fast, so less retry/delay
+        // Suggestions should be fast, so less retry/delay, but retry once just in case
         const response = await generateWithRetry("gemini-2.5-flash", {
             contents: prompt,
             config: {
@@ -448,7 +460,7 @@ export async function getSmartSuggestions(type: SuggestionType, currentInput: st
                     required: ["suggestions"]
                 }
             }
-        }, 1, 1000); 
+        }, 1, 1500); 
         
         const responseText = response.text;
         const json = JSON.parse(responseText || "{}");
@@ -476,6 +488,7 @@ const bibleCache = new Map<string, BibleVerse[]>();
 const linguisticAnalysisCache = new Map<string, LinguisticAnalysisItem[]>();
 const interpretationCache = new Map<string, string>();
 const simplifiedExplanationCache = new Map<string, string>();
+const bookIntroCache = new Map<string, string>();
 
 export async function getBibleChapterText(bookName: string, chapter: number): Promise<BibleVerse[]> {
     const cacheKey = `${bookName}:${chapter}`;
@@ -742,6 +755,41 @@ export async function getSimplifiedExplanation(bookName: string, chapter: number
     } catch (error: any) {
         console.error("Simplified explanation failed:", error);
         throw new Error(error.message || "فشل في تحميل الشرح المبسط.");
+    }
+}
+
+export async function getBookIntroduction(bookName: string): Promise<string> {
+    if (bookIntroCache.has(bookName)) {
+        return bookIntroCache.get(bookName)!;
+    }
+
+    const prompt = `
+        Act as an expert Coptic Orthodox theologian and biblical scholar.
+        Provide a **Comprehensive Introduction** for the Bible Book: **${bookName}**.
+
+        Include the following sections in detail:
+        1. **Author (كاتب السفر):** Who wrote it? Historical and traditional evidence.
+        2. **Date (تاريخ الكتابة):** When was it written?
+        3. **Context & Audience (سياق الكتابة):** How and why was it written? Who was the intended audience?
+        4. **Main Characters (شخصيات السفر):** Key figures mentioned in the book.
+        5. **Purpose & Key Themes (الغرض من السفر والسمات الرئيسية):** What are the spiritual and theological goals?
+        6. **Additional Info (معلومات إضافية):** Any unique features, Coptic traditions, or linguistic notes.
+
+        Use clean Markdown with clear headings and bullet points. Language: Arabic. Rich, educational, and spiritual style.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: { temperature: 0.4 }
+        });
+
+        const text = (response.text || "").trim();
+        bookIntroCache.set(bookName, text);
+        return text;
+    } catch (error: any) {
+        console.error("Book introduction failed:", error);
+        throw new Error(error.message || "فشل في تحميل مقدمة السفر.");
     }
 }
 

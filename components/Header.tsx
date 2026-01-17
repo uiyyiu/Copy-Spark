@@ -1,7 +1,6 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon, ArchiveIcon, LogoutIcon, UsersIcon } from './icons';
+import { RefreshIcon, PrintIcon, DownloadIcon, SpinnerIcon, DevicePhoneMobileIcon, MenuIcon, XMarkIcon, BookmarkIcon, CheckCircleIcon, ArchiveIcon, LogoutIcon, UsersIcon, CogIcon } from './icons';
 import { signInWithGoogle } from '../services/supabase';
 
 interface HeaderProps {
@@ -14,11 +13,12 @@ interface HeaderProps {
     isSaving?: boolean;
     saveSuccess?: boolean;
     onSignOut?: () => void;
-    onOpenSaved?: () => void; // New prop to open saved modal
+    onOpenSaved?: () => void; 
     isExportingPdf: boolean;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     onOpenInfoModal: (modalId: string) => void;
+    onOpenSettings: () => void; // New prop for settings
     isHero?: boolean;
     user?: any;
 }
@@ -36,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({
     onOpenSaved, 
     isExportingPdf, 
     onOpenInfoModal, 
+    onOpenSettings,
     user 
 }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -133,6 +134,15 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center gap-2">
                     <div id="header-actions" className="flex items-center gap-2">
                         
+                        {/* Settings Button */}
+                        <button 
+                            onClick={onOpenSettings}
+                            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                            title="الإعدادات"
+                        >
+                            <CogIcon className="w-6 h-6" />
+                        </button>
+
                         {/* User Profile / Login */}
                         <div className="relative ml-2 pl-2 border-l border-white/10">
                             {user ? (

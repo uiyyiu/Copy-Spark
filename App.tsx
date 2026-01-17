@@ -22,6 +22,7 @@ import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
+import SettingsModal from './components/SettingsModal';
 import { BookOpenIcon, TargetIcon } from './components/icons'; 
 
 const initialFormData = {
@@ -60,7 +61,8 @@ function App() {
   // Saving State
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [showSavedModal, setShowSavedModal] = useState(false); 
+  const [showSavedModal, setShowSavedModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
@@ -535,6 +537,7 @@ function App() {
                 toggleTheme={toggleTheme}
                 onOpenSaved={() => setShowSavedModal(true)}
                 onOpenInfoModal={(id) => setActiveInfoModal(id)}
+                onOpenSettings={() => setShowSettingsModal(true)}
                 user={user}
             />
 
@@ -574,6 +577,11 @@ function App() {
                 isOpen={showSavedModal}
                 onClose={() => setShowSavedModal(false)}
                 userId={user?.id}
+            />
+
+            <SettingsModal
+                isOpen={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}
             />
           </>
       )}

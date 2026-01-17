@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { bibleBooks, BibleBook } from '../utils/bibleData';
-import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, getSimplifiedExplanation, BibleVerse, LinguisticAnalysisItem } from '../services/geminiService';
+import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, getSimplifiedExplanation, getBookIntroduction, BibleVerse, LinguisticAnalysisItem } from '../services/geminiService';
 import { formatTextToHtml } from '../services/exportService';
-import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon, BookmarkIcon, MaximizeIcon, MinimizeIcon, TextIncreaseIcon, TextDecreaseIcon, TypefaceIcon } from './icons';
+import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon, BookmarkIcon, MaximizeIcon, MinimizeIcon, TextIncreaseIcon, TextDecreaseIcon, TypefaceIcon, InfoIcon } from './icons';
 import { saveLessonToLibrary, signInWithGoogle } from '../services/supabase';
 
 interface BibleReaderProps {
@@ -44,6 +45,11 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
     const [showSimpleExplanation, setShowSimpleExplanation] = useState(false);
     const [simpleExplanationData, setSimpleExplanationData] = useState<string | null>(null);
     const [isLoadingSimpleExplanation, setIsLoadingSimpleExplanation] = useState(false);
+
+    // Book Introduction States
+    const [showBookIntro, setShowBookIntro] = useState(false);
+    const [bookIntroData, setBookIntroData] = useState<string | null>(null);
+    const [isLoadingBookIntro, setIsLoadingBookIntro] = useState(false);
 
     // Saving States
     const [isSaving, setIsSaving] = useState(false);
@@ -184,6 +190,29 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
         }
     }
 
+    const fetchBookIntroductionData = async () => {
+        if (!selectedBook) return;
+        
+        if (!bookIntroData) {
+            setIsLoadingBookIntro(true);
+            setBookIntroData(null);
+        }
+        
+        setShowBookIntro(true);
+        
+        if (!bookIntroData) {
+            try {
+                const intro = await getBookIntroduction(selectedBook.name);
+                setBookIntroData(intro);
+            } catch (err) {
+                console.error(err);
+                setBookIntroData("حدث خطأ في تحميل مقدمة السفر.");
+            } finally {
+                setIsLoadingBookIntro(false);
+            }
+        }
+    };
+
     const toggleVerseSelection = (verseNumber: number) => {
         setSelectedVerses(prev => {
             if (prev.includes(verseNumber)) {
@@ -220,6 +249,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
 
     const handleBookSelect = (book: BibleBook) => {
         setSelectedBook(book);
+        setBookIntroData(null); // Reset intro when book changes
         setView('chapter-select');
     };
 
@@ -330,11 +360,26 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
     );
 
     const ChapterSelect = () => (
-        <div className="animate-fade-in max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white font-serif mb-2">{selectedBook?.name}</h2>
-                <p className="text-slate-400">اختر الأصحاح</p>
+        <div className="animate-fade-in max-w-4xl mx-auto pb-20">
+            <div className="text-center mb-10">
+                <h2 className="text-4xl font-bold text-white font-serif mb-2">{selectedBook?.name}</h2>
+                <p className="text-slate-400 mb-8">اختر الأصحاح أو ابدأ بدراسة السفر</p>
+                
+                {/* Book Intro Button */}
+                <button 
+                    onClick={fetchBookIntroductionData}
+                    className="group relative overflow-hidden inline-flex items-center gap-3 px-8 py-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-amber-500/10"
+                >
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform">
+                        <InfoIcon className="w-6 h-6" />
+                    </div>
+                    <div className="text-right">
+                        <span className="block text-amber-400 font-bold text-lg font-serif">مقدمة السفر</span>
+                        <span className="block text-slate-400 text-xs mt-0.5">الكاتب، التاريخ، الغرض، الشخصيات</span>
+                    </div>
+                </button>
             </div>
+
             <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
                 {Array.from({ length: selectedBook?.chapters || 0 }, (_, i) => i + 1).map(num => (
                     <button
@@ -449,7 +494,24 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                     </div>
                 )}
                 
-                {/* Modals are unchanged but are included for completeness */}
+                {/* Modals */}
+                {showBookIntro && (
+                    <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowBookIntro(false)}></div>
+                        <div className="relative w-full max-w-2xl h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
+                            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
+                                <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><InfoIcon className="w-5 h-5 text-amber-400" />مقدمة سفر {selectedBook?.name}</h3><p className="text-xs text-slate-400 mt-1">دراسة تاريخية وروحية شاملة</p></div>
+                                <div className="flex items-center gap-2">
+                                    {bookIntroData && <button onClick={() => handleSaveContent(`مقدمة سفر: ${selectedBook?.name}`, { type: 'book-intro', body: bookIntroData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-amber-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
+                                    <button onClick={() => setShowBookIntro(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
+                                </div>
+                            </div>
+                            <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1e293b]/30">
+                                {isLoadingBookIntro ? <div className="flex flex-col items-center justify-center h-full gap-6 text-center"><SpinnerIcon className="w-12 h-12 text-amber-500 animate-spin" /><p className="text-slate-300 font-serif">جاري جمع المعلومات...</p></div> : bookIntroData ? <div className="formatted-content spark-body-serif text-slate-200 font-sans leading-loose" dangerouslySetInnerHTML={{ __html: formatTextToHtml(bookIntroData) }} /> : <div className="text-center text-slate-500 py-10">لا توجد معلومات.</div>}
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {showSimpleExplanation && (
                      <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowSimpleExplanation(false)}></div>
@@ -510,6 +572,24 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                         </div>
                     </div>
                 )}
+                {/* Book Intro Modal also shown inside ReadingView if opened from within */}
+                {showBookIntro && (
+                    <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowBookIntro(false)}></div>
+                        <div className="relative w-full max-w-2xl h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
+                            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
+                                <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><InfoIcon className="w-5 h-5 text-amber-400" />مقدمة سفر {selectedBook?.name}</h3><p className="text-xs text-slate-400 mt-1">دراسة تاريخية وروحية شاملة</p></div>
+                                <div className="flex items-center gap-2">
+                                    {bookIntroData && <button onClick={() => handleSaveContent(`مقدمة سفر: ${selectedBook?.name}`, { type: 'book-intro', body: bookIntroData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-amber-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
+                                    <button onClick={() => setShowBookIntro(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
+                                </div>
+                            </div>
+                            <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1e293b]/30">
+                                {isLoadingBookIntro ? <div className="flex flex-col items-center justify-center h-full gap-6 text-center"><SpinnerIcon className="w-12 h-12 text-amber-500 animate-spin" /><p className="text-slate-300 font-serif">جاري جمع المعلومات...</p></div> : bookIntroData ? <div className="formatted-content spark-body-serif text-slate-200 font-sans leading-loose" dangerouslySetInnerHTML={{ __html: formatTextToHtml(bookIntroData) }} /> : <div className="text-center text-slate-500 py-10">لا توجد معلومات.</div>}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
@@ -544,6 +624,25 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
             {view === 'book-select' && <BookSelect />}
             {view === 'chapter-select' && <ChapterSelect />}
             {view === 'reading' && <ReadingView />}
+
+            {/* Global Modals for cases where view is not reading but we open intro from ChapterSelect */}
+            {view === 'chapter-select' && showBookIntro && (
+                <div className="fixed inset-0 z-[70] flex justify-end pointer-events-none">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto animate-fade-in" onClick={() => setShowBookIntro(false)}></div>
+                    <div className="relative w-full max-w-2xl h-full bg-[#0f172a]/95 border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col animate-fade-in-right">
+                        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
+                            <div><h3 className="text-lg font-bold text-white flex items-center gap-2 font-serif"><InfoIcon className="w-5 h-5 text-amber-400" />مقدمة سفر {selectedBook?.name}</h3><p className="text-xs text-slate-400 mt-1">دراسة تاريخية وروحية شاملة</p></div>
+                            <div className="flex items-center gap-2">
+                                {bookIntroData && <button onClick={() => handleSaveContent(`مقدمة سفر: ${selectedBook?.name}`, { type: 'book-intro', body: bookIntroData })} disabled={isSaving} className={`p-2 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-amber-500/10 transition-colors ${saveSuccess ? 'text-green-400' : ''}`}>{isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : saveSuccess ? <CheckCircleIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}</button>}
+                                <button onClick={() => setShowBookIntro(false)} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10"><XMarkIcon className="w-6 h-6" /></button>
+                            </div>
+                        </div>
+                        <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1e293b]/30">
+                            {isLoadingBookIntro ? <div className="flex flex-col items-center justify-center h-full gap-6 text-center"><SpinnerIcon className="w-12 h-12 text-amber-500 animate-spin" /><p className="text-slate-300 font-serif">جاري جمع المعلومات...</p></div> : bookIntroData ? <div className="formatted-content spark-body-serif text-slate-200 font-sans leading-loose" dangerouslySetInnerHTML={{ __html: formatTextToHtml(bookIntroData) }} /> : <div className="text-center text-slate-500 py-10">لا توجد معلومات.</div>}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
