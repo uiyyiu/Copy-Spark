@@ -23,7 +23,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
 import SettingsModal from './components/SettingsModal';
-import { BookOpenIcon, TargetIcon } from './components/icons'; 
+import { BookOpenIcon, TargetIcon, LightBulbIcon } from './components/icons'; 
 
 const initialFormData = {
     lessonTitle: '',
@@ -463,20 +463,27 @@ function App() {
                                       
                                       <p className="text-slate-300 mb-4 leading-relaxed">{lesson.summary}</p>
                                       
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                          <div className="bg-white/5 p-3 rounded-lg">
-                                              <div className="flex items-center gap-2 mb-1">
-                                                  <TargetIcon className="w-4 h-4 text-purple-400" />
-                                                  <span className="text-xs font-bold text-slate-400">الرابط بالهدف</span>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-purple-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <TargetIcon className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">الرابط بالهدف</span>
                                               </div>
-                                              <p className="text-sm text-slate-300">{lesson.linkToObjective}</p>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.linkToObjective}</p>
                                           </div>
-                                          <div className="bg-white/5 p-3 rounded-lg">
-                                              <div className="flex items-center gap-2 mb-1">
-                                                  <div className="w-4 h-4 text-green-400">⚡</div>
-                                                  <span className="text-xs font-bold text-slate-400">نشاط مقترح</span>
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-amber-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <LightBulbIcon className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">المنهجية</span>
                                               </div>
-                                              <p className="text-sm text-slate-300">{lesson.activityIdea}</p>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.methodology}</p>
+                                          </div>
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-green-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <div className="w-4 h-4 text-green-400 group-hover:scale-110 transition-transform">⚡</div>
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">نشاط مقترح</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.activityIdea}</p>
                                           </div>
                                       </div>
                                   </div>
