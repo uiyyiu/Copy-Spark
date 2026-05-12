@@ -1,7 +1,7 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase, saveLessonToLibrary, signOut, createPatristicChat, updatePatristicChat, getPatristicChats, deletePatristicChat, signInWithGoogle } from './services/supabase';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'; 
-import { motion, AnimatePresence } from 'motion/react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -23,7 +23,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
 import SettingsModal from './components/SettingsModal';
-import { BookOpenIcon, TargetIcon, LightBulbIcon, SparklesIcon } from './components/icons'; 
+import { BookOpenIcon, TargetIcon } from './components/icons'; 
 
 const initialFormData = {
     lessonTitle: '',
@@ -123,7 +123,7 @@ function App() {
     setGameResults(null);
     setCurriculumResults(null);
     setPatristicMessages([]);
-    setCurrentChatId(null); 
+    setCurrentChatId(null); // Reset active chat
     setError(null);
     setIsLoading(false);
     setItemIsLoading({});
@@ -151,7 +151,7 @@ function App() {
           contentToSave = lessonPlan;
       } else if (curriculumResults) {
           titleToSave = `خطة منهج: ${curriculumResults[0]?.linkToObjective || 'بدون عنوان'}`;
-          contentToSave = { lessonBody: JSON.stringify(curriculumResults) };
+          contentToSave = { lessonBody: JSON.stringify(curriculumResults) }; // Wrap in expected structure
       } else {
           return;
       }
@@ -282,10 +282,13 @@ function App() {
           const updatedHistory = [...newHistory, { role: 'model' as const, content: response }];
           setPatristicMessages(updatedHistory);
 
+          // Save logic - Only if user is logged in
           if (user) {
               if (currentChatId) {
+                  // Update existing chat
                   await updatePatristicChat(currentChatId, updatedHistory);
               } else {
+                  // Create new chat (Title is first 40 chars of first message)
                   const title = userMessage.slice(0, 40) + (userMessage.length > 40 ? '...' : '');
                   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
                   
@@ -323,6 +326,10 @@ function App() {
       });
   };
 
+  const handlePrint = () => window.print();
+  const handleExport = () => {}; 
+  const handleExportPdf = () => {}; 
+
   const handleToggleSelect = useCallback((sectionKey: IdeaSectionKey, ideaId: string) => {
       if (!lessonPlan) return;
       let idea;
@@ -346,6 +353,7 @@ function App() {
     } catch (err) { console.error(err); } finally { setItemIsLoading(prev => ({ ...prev, [ideaId]: false })); }
   }, [lessonPlan, formData]);
   
+  const handleShareIdea = (idea: Idea) => { /* ... */ };
   const handleExplainIdea = async (idea: Idea) => {
         setItemIsLoading(prev => ({ ...prev, [idea.id]: true }));
         try {
@@ -355,28 +363,18 @@ function App() {
             setItemIsLoading(prev => ({ ...prev, [idea.id]: false }));
         }
   };
+  const handleOpenExplanation = () => { /* ... */ };
 
   const renderContent = () => {
       if (!showIntro && !selectedTool) {
-          return (
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full"
-            >
-                <ToolsDashboard onSelectTool={setSelectedTool} user={user} />
-            </motion.div>
-          );
+          // Pass User to ToolsDashboard
+          return <ToolsDashboard onSelectTool={setSelectedTool} user={user} />;
       }
 
       if (selectedTool === 'lesson-builder') {
           if (lessonPlan) {
               return (
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="max-w-3xl mx-auto w-full"
-                >
+                  <div className="max-w-2xl mx-auto w-full">
                     <ResultsDisplay 
                         isLoading={false}
                         lessonPlan={lessonPlan}
@@ -389,33 +387,25 @@ function App() {
                         itemIsLoading={itemIsLoading}
                         onToggleSelect={handleToggleSelect}
                         onGenerateAlternative={handleGenerateAlternative}
-                        onShare={() => {}}
+                        onShare={handleShareIdea}
                         onExplain={handleExplainIdea}
-                        onOpenExplanation={() => {}}
+                        onOpenExplanation={handleOpenExplanation}
                         onToggleChat={() => setIsChatOpen(prev => !prev)}
                     />
-                </motion.div>
+                  </div>
               );
           }
           if (isLoading) return <LoadingSpinner />;
 
           if (currentStep === 1) {
-              return (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <Step1Basics formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} toolId={selectedTool} />
-                </motion.div>
-              );
+              return <Step1Basics formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} toolId={selectedTool} />;
           }
           if (currentStep === 2) {
               return (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="space-y-8 max-w-4xl mx-auto"
-                  >
+                  <div className="space-y-6 max-w-4xl mx-auto">
                       <ProgressIndicator currentStep={currentStep} totalSteps={2} />
                       <Step2Details formData={formData} setFormData={setFormData} onBack={() => setCurrentStep(1)} onSubmit={handleLessonSubmit} isLoading={isLoading} />
-                  </motion.div>
+                  </div>
               );
           }
       }
@@ -424,29 +414,20 @@ function App() {
           if (isLoading) return <LoadingSpinner />;
           if (gameResults) {
               return (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="max-w-3xl mx-auto space-y-6"
-                  >
+                  <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+                       {/* Game Results Display */}
                        {gameResults.map((game: any, index: number) => (
-                           <motion.div 
-                             key={index}
-                             initial={{ opacity: 0, y: 10 }}
-                             animate={{ opacity: 1, y: 0 }}
-                             transition={{ delay: index * 0.1 }}
-                             className="glass-card p-8 rounded-[2rem] border border-emerald-500/10 hover:border-emerald-500/20"
-                           >
-                               <h3 className="text-2xl font-bold text-emerald-400 mb-4 font-display italic">{game.title}</h3>
-                               <p className="text-slate-300 mb-6 font-spiritual text-lg italic leading-relaxed">{game.description}</p>
-                               <div className="bg-slate-900/40 p-6 rounded-2xl border border-white/5">
-                                   <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-widest">طريقة اللعب:</h4>
-                                   <p className="text-slate-300 text-base font-spiritual leading-relaxed italic">{game.rules}</p>
+                           <div key={index} className="glass-card p-6 rounded-2xl border border-green-500/20">
+                               <h3 className="text-xl font-bold text-white mb-2">{game.title}</h3>
+                               <p className="text-slate-300 mb-4">{game.description}</p>
+                               <div className="bg-white/5 p-4 rounded-lg">
+                                   <h4 className="text-sm font-bold text-slate-400 mb-1">طريقة اللعب:</h4>
+                                   <p className="text-slate-300 text-sm">{game.rules}</p>
                                </div>
-                           </motion.div>
+                           </div>
                        ))}
-                       <button onClick={() => setGameResults(null)} className="w-full py-4 mt-8 glass-card rounded-2xl text-slate-400 hover:text-white transition-all font-bold tracking-widest uppercase text-sm">عودة للمحرك</button>
-                  </motion.div>
+                       <button onClick={() => setGameResults(null)} className="w-full py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors">عودة</button>
+                  </div>
               );
           }
           return <GameBankForm onSubmit={handleGamesSubmit} isLoading={isLoading} />;
@@ -456,72 +437,61 @@ function App() {
           if (isLoading) return <LoadingSpinner />;
           if (curriculumResults) {
               return (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="max-w-5xl mx-auto space-y-12"
-                  >
-                      <div className="text-center mb-12">
-                          <h2 className="text-5xl font-black text-white mb-4 font-display italic tracking-tighter">الخطة الاستراتيجية</h2>
-                          <div className="h-1.5 w-32 bg-purple-500 mx-auto rounded-full mb-4"></div>
-                          <p className="text-purple-300/80 font-spiritual italic text-xl">مسار نمو روحي متكامل وممنهج</p>
+                  <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                      <div className="text-center mb-8">
+                          <h2 className="text-3xl font-bold text-white mb-2">الخطة المقترحة</h2>
+                          <p className="text-purple-300">سلسلة مترابطة لخدمة الهدف الروحي</p>
                       </div>
                       
-                      <div className="space-y-12">
+                      <div className="relative border-r-2 border-purple-500/30 mr-4 md:mr-0 space-y-8">
                           {curriculumResults.map((lesson, index) => (
-                              <motion.div 
-                                key={index}
-                                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="glass-card p-8 md:p-10 rounded-[2.5rem] border border-purple-500/10 hover:border-purple-500/30 group"
-                              >
-                                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                      <div className="flex items-center gap-6">
-                                          <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center text-2xl font-black text-purple-400 font-display">
-                                              {lesson.week}
-                                          </div>
+                              <div key={index} className="relative pr-8">
+                                  {/* Timeline Dot */}
+                                  <div className="absolute top-0 right-[-9px] w-4 h-4 bg-purple-500 rounded-full border-4 border-[#0f172a]"></div>
+                                  
+                                  <div className="glass-card p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/50 transition-all">
+                                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                                           <div>
-                                              <span className="text-[10px] font-bold text-purple-450 uppercase tracking-[0.2em] opacity-60 mb-2 block">الأسبوع الدراسي</span>
-                                              <h3 className="text-3xl font-black text-white font-display italic tracking-tight group-hover:text-purple-400 transition-colors">{lesson.title}</h3>
+                                              <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-xs font-bold mb-2">الأسبوع {lesson.week}</span>
+                                              <h3 className="text-xl font-bold text-white">{lesson.title}</h3>
+                                          </div>
+                                          <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-lg border border-white/5">
+                                              <BookOpenIcon className="w-4 h-4 text-amber-400" />
+                                              <span className="text-sm text-slate-300 font-serif" dir="ltr">{lesson.scripture}</span>
                                           </div>
                                       </div>
-                                      <div className="flex items-center gap-4 bg-slate-950/40 p-4 rounded-2xl border border-white/5">
-                                          <BookOpenIcon className="w-6 h-6 text-amber-500/70" />
-                                          <span className="text-lg text-slate-300 font-spiritual italic" dir="ltr">{lesson.scripture}</span>
+                                      
+                                      <p className="text-slate-300 mb-4 leading-relaxed">{lesson.summary}</p>
+                                      
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-purple-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <TargetIcon className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">الرابط بالهدف</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.linkToObjective}</p>
+                                          </div>
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-amber-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <LightBulbIcon className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">المنهجية</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.methodology}</p>
+                                          </div>
+                                          <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-green-500/30 transition-colors group">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                  <div className="w-4 h-4 text-green-400 group-hover:scale-110 transition-transform">⚡</div>
+                                                  <span className="text-xs font-bold text-slate-400 tracking-wider">نشاط مقترح</span>
+                                              </div>
+                                              <p className="text-sm text-slate-300 leading-relaxed">{lesson.activityIdea}</p>
+                                          </div>
                                       </div>
                                   </div>
-                                  
-                                  <p className="text-xl text-slate-300 mb-8 leading-relaxed font-spiritual italic border-r-4 border-purple-500/30 pr-6">{lesson.summary}</p>
-                                  
-                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                      <div className="bg-slate-900/40 p-6 rounded-2xl border border-white/5 hover:border-purple-600/20 transition-all">
-                                          <div className="flex items-center gap-3 mb-4 text-purple-400">
-                                              <TargetIcon className="w-5 h-5" />
-                                              <span className="text-xs font-bold uppercase tracking-widest opacity-60">الرابط بالهدف</span>
-                                          </div>
-                                          <p className="text-base text-slate-300 leading-relaxed font-spiritual italic">{lesson.linkToObjective}</p>
-                                      </div>
-                                      <div className="bg-slate-900/40 p-6 rounded-2xl border border-white/5 hover:border-amber-600/20 transition-all">
-                                          <div className="flex items-center gap-3 mb-4 text-amber-400">
-                                              <LightBulbIcon className="w-5 h-5" />
-                                              <span className="text-xs font-bold uppercase tracking-widest opacity-60">المنهجية</span>
-                                          </div>
-                                          <p className="text-base text-slate-300 leading-relaxed font-spiritual italic">{lesson.methodology}</p>
-                                      </div>
-                                      <div className="bg-slate-900/40 p-6 rounded-2xl border border-white/5 hover:border-emerald-600/20 transition-all">
-                                          <div className="flex items-center gap-3 mb-4 text-emerald-400">
-                                              <SparklesIcon className="w-5 h-5" />
-                                              <span className="text-xs font-bold uppercase tracking-widest opacity-60">نشاط مقترح</span>
-                                          </div>
-                                          <p className="text-base text-slate-300 leading-relaxed font-spiritual italic">{lesson.activityIdea}</p>
-                                      </div>
-                                  </div>
-                              </motion.div>
+                              </div>
                           ))}
                       </div>
-                      <button onClick={() => setCurriculumResults(null)} className="w-full py-5 glass-card rounded-[2rem] text-slate-400 hover:text-white transition-all font-bold tracking-widest uppercase text-xs mt-12">العودة للوحة التحكم</button>
-                  </motion.div>
+                      <button onClick={() => setCurriculumResults(null)} className="w-full py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors">عودة</button>
+                  </div>
               );
           }
           return <CurriculumBuilderForm onSubmit={handleCurriculumSubmit} isLoading={isLoading} />;
@@ -529,51 +499,43 @@ function App() {
 
       if (selectedTool === 'patristic-assistant') {
           return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <PatristicResearchForm 
-                    messages={patristicMessages}
-                    onSendMessage={handlePatristicMessage}
-                    isLoading={isLoading}
-                    chatHistory={chatHistoryList}
-                    currentChatId={currentChatId}
-                    onNewChat={handlePatristicNewChat}
-                    onLoadChat={handlePatristicLoadChat}
-                    onDeleteChat={handlePatristicDeleteChat}
-                />
-            </motion.div>
+              <PatristicResearchForm 
+                  messages={patristicMessages}
+                  onSendMessage={handlePatristicMessage}
+                  isLoading={isLoading}
+                  chatHistory={chatHistoryList}
+                  currentChatId={currentChatId}
+                  onNewChat={handlePatristicNewChat}
+                  onLoadChat={handlePatristicLoadChat}
+                  onDeleteChat={handlePatristicDeleteChat}
+              />
           );
       }
 
       if (selectedTool === 'bible-reader') {
-          return (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                <BibleReader user={user} />
-            </motion.div>
-          );
+          return <BibleReader user={user} />;
       }
 
       return null;
   };
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500/30 selection:text-white`}>
-      <div className="fixed inset-0 pointer-events-none z-[-2]">
-          <div className="absolute inset-0 bg-slate-950"></div>
-          <div className="absolute top-[10%] left-[5%] w-[40rem] h-[40rem] bg-amber-500/5 blur-[12rem] rounded-full"></div>
-          <div className="absolute bottom-[10%] right-[5%] w-[40rem] h-[40rem] bg-blue-500/5 blur-[12rem] rounded-full"></div>
-          <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-      </div>
+    <div className={`min-h-screen flex flex-col bg-[#0f172a] ${theme}`}>
+      <div className="fixed inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none"></div>
+        {/* Background Gradients */}
+        <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none"></div>
+        <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px] pointer-events-none"></div>
       
       {showIntro ? (
           <IntroScreen onEnter={() => setShowIntro(false)} />
       ) : (
-          <div className="flex flex-col min-h-screen">
+          <>
             <Header 
                 onReset={handleReset} 
                 showActions={!!lessonPlan || !!curriculumResults}
-                onPrint={() => window.print()} 
-                onExport={() => {}}
-                onExportPdf={() => {}}
+                onPrint={handlePrint}
+                onExport={handleExport}
+                onExportPdf={handleExportPdf}
                 onSave={(lessonPlan || curriculumResults) ? handleSave : undefined}
                 isSaving={isSaving}
                 saveSuccess={saveSuccess}
@@ -586,19 +548,12 @@ function App() {
                 user={user}
             />
 
-            <main className="flex-grow container mx-auto px-4 py-12 relative z-10">
-                <AnimatePresence mode="wait">
-                    {error && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-rose-500/10 border border-rose-500/20 text-rose-200 p-6 rounded-[1.5rem] mb-10 text-center font-spiritual italic"
-                        >
-                            {error}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+            <main className="flex-grow container mx-auto px-4 py-8 relative z-10">
+                {error && (
+                    <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 text-center animate-fade-in">
+                        {error}
+                    </div>
+                )}
                 {renderContent()}
             </main>
 
@@ -635,7 +590,7 @@ function App() {
                 isOpen={showSettingsModal}
                 onClose={() => setShowSettingsModal(false)}
             />
-          </div>
+          </>
       )}
     </div>
   );

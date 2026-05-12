@@ -1,6 +1,6 @@
+
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { XMarkIcon, PencilIcon, StadiumIcon, AssistantIcon, SparklesIcon, CheckCircleIcon, BookOpenIcon, TargetIcon, PuzzleIcon, ImageIcon, ArchiveIcon, DownloadIcon, ScrollIcon, GlobeIcon, BrainIcon } from './icons';
+import { XMarkIcon, PencilIcon, StadiumIcon, AssistantIcon, SparklesIcon, CheckCircleIcon, BookOpenIcon, TargetIcon, PuzzleIcon } from './icons';
 
 interface InfoModalProps {
     activeModal: string | null;
@@ -11,165 +11,236 @@ const InfoModal: React.FC<InfoModalProps> = ({ activeModal, onClose }) => {
     if (!activeModal) return null;
 
     const methodologyContent = (
-        <div className="flex flex-col items-center py-12 w-full" dir="rtl">
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-slate-300 text-center max-w-3xl mx-auto mb-20 text-xl font-spiritual italic leading-relaxed"
-          >
-              يعتمد <strong className="text-amber-400 not-italic">SPARK</strong> على خوارزمية ذكاء اصطناعي سيادية، صُممت خصيصاً لدمج التكنولوجيا الفائقة مع التراث الكنسي الأرثوذكسي الأصيل.
-          </motion.p>
+        <div className="flex flex-col items-center py-8 w-full">
+          <p className="text-slate-300 text-center max-w-3xl mx-auto mb-16 text-lg leading-relaxed font-light">
+              يعتمد <strong className="text-amber-400">SPARK</strong> على خوارزمية دقيقة لضمان أن كل مخرج هو ليس مجرد توليد عشوائي، بل نتاج بحث في عمق التراث الكنسي.
+          </p>
           
-          <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 relative">
-              <div className="hidden lg:block absolute top-16 left-12 right-12 h-0.5 bg-gradient-to-r from-transparent via-amber-500/20 to-transparent rounded-full -z-10"></div>
+          <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gradient-to-l from-slate-700 via-amber-500/50 to-slate-700 rounded-full -z-10"></div>
   
-              {[
-                  { icon: GlobeIcon, color: 'sky', title: 'رسم المسار', desc: 'تخطيط المنهج الروحي طويل المدى لضمان نمو متوازن وشامل للفئات العمرية المختلفة.' },
-                  { icon: BookOpenIcon, color: 'amber', title: 'تأصيل الكلمة', desc: 'البحث العميق في الكتاب المقدس واستحضار التفاسير الآبائية من مصادرها الأصلية.' },
-                  { icon: PencilIcon, color: 'purple', title: 'بناء الدرس', desc: 'صياغة المادة اللاهوتية في قالب تربوي مشوق يشمل الأهداف والعناصر التطبيقية.' },
-                  { icon: StadiumIcon, color: 'emerald', title: 'المرح الهادف', desc: 'ابتكار أنشطة حركية وذهنية ذكية تربط المعلومة الروحية بالواقع العملي بطريقة مرحة.' },
-                  { icon: ArchiveIcon, color: 'indigo', title: 'التوثيق السحابي', desc: 'حفظ وأرشفة كافة التحضيرات في مكتبة رقمية تضمن استدامة الخدمة وتراكم الخبرات.' }
-              ].map((step, idx) => (
-                  <motion.div 
-                    key={idx}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="relative flex flex-col items-center text-center group"
-                  >
-                      <div className={`w-28 h-28 rounded-[2rem] bg-slate-950 border-2 border-white/5 group-hover:border-${step.color}-500/50 transition-all duration-700 flex items-center justify-center shadow-2xl z-10 mb-8 relative overflow-hidden`}>
-                           <div className={`absolute inset-0 bg-${step.color}-500/5 opacity-0 group-hover:opacity-100 transition-opacity`}></div>
-                           <step.icon className={`w-10 h-10 text-slate-500 group-hover:text-${step.color}-400 transition-all duration-500 transform group-hover:scale-110`} />
-                      </div>
-                      <div className="bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] border border-white/5 w-full h-full group-hover:bg-amber-500/5 transition-all duration-500 shadow-lg flex flex-col">
-                          <h3 className={`text-${step.color}-400 font-display italic font-black text-lg mb-3 tracking-tight`}>{idx + 1}. {step.title}</h3>
-                          <p className="text-slate-400 text-xs font-spiritual italic leading-relaxed opacity-80 group-hover:opacity-100">
-                              {step.desc}
-                          </p>
-                      </div>
-                  </motion.div>
-              ))}
+              {/* Step 1 */}
+              <div className="relative flex flex-col items-center text-center group">
+                  <div className="w-24 h-24 rounded-full bg-[#0f172a] border-4 border-slate-700 group-hover:border-blue-500 transition-all duration-500 flex items-center justify-center shadow-xl z-10 mb-6">
+                      <TargetIcon className="w-10 h-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full h-full hover:bg-white/10 transition-colors">
+                      <h3 className="text-blue-400 font-bold text-xl mb-2 font-serif">1. المدخلات</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                          يستقبل النظام هدفك الروحي، الشاهد الكتابي، والفئة العمرية المستهدفة بدقة.
+                      </p>
+                  </div>
+              </div>
+  
+              {/* Step 2 */}
+              <div className="relative flex flex-col items-center text-center group">
+                  <div className="w-24 h-24 rounded-full bg-[#0f172a] border-4 border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.3)] scale-110 transition-all duration-500 flex items-center justify-center z-10 mb-6">
+                      <BookOpenIcon className="w-10 h-10 text-amber-400 animate-pulse" />
+                  </div>
+                  <div className="bg-gradient-to-b from-amber-500/10 to-transparent p-4 rounded-xl border border-amber-500/30 w-full h-full">
+                      <h3 className="text-amber-400 font-bold text-xl mb-2 font-serif">2. الفحص المرجعي</h3>
+                      <p className="text-slate-300 text-sm leading-relaxed font-semibold">
+                          (المرحلة الأهم)
+                          <br/>
+                          يتم فلترة المدخلات ومطابقتها مع أقوال الآباء، التفاسير المعتمدة، والعقيدة الأرثوذكسية لضمان سلامة التعليم.
+                      </p>
+                  </div>
+              </div>
+  
+              {/* Step 3 */}
+              <div className="relative flex flex-col items-center text-center group">
+                  <div className="w-24 h-24 rounded-full bg-[#0f172a] border-4 border-slate-700 group-hover:border-purple-500 transition-all duration-500 flex items-center justify-center shadow-xl z-10 mb-6">
+                      <PuzzleIcon className="w-10 h-10 text-slate-400 group-hover:text-purple-400 transition-colors" />
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full h-full hover:bg-white/10 transition-colors">
+                      <h3 className="text-purple-400 font-bold text-xl mb-2 font-serif">3. المعالجة التربوية</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                          تحويل المادة الدسمة إلى أسلوب قصشي شائق للأطفال، أو حوار عميق للشباب، مع اقتراح وسائل إيضاح.
+                      </p>
+                  </div>
+              </div>
+  
+              {/* Step 4 */}
+              <div className="relative flex flex-col items-center text-center group">
+                  <div className="w-24 h-24 rounded-full bg-[#0f172a] border-4 border-slate-700 group-hover:border-green-500 transition-all duration-500 flex items-center justify-center shadow-xl z-10 mb-6">
+                      <CheckCircleIcon className="w-10 h-10 text-slate-400 group-hover:text-green-400 transition-colors" />
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full h-full hover:bg-white/10 transition-colors">
+                      <h3 className="text-green-400 font-bold text-xl mb-2 font-serif">4. النتيجة الاحترافية</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                          خطة درس متكاملة، ألعاب هادفة، أو إجابات لاهوتية دقيقة.. جاهزة لخدمتك فوراً.
+                      </p>
+                  </div>
+              </div>
           </div>
         </div>
     );
   
     const featuresContent = (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-2" dir="rtl">
-            {[
-                { icon: PencilIcon, color: 'amber', title: 'تحضير الدروس', desc: 'توليد دروس كنسية متكاملة تشمل المقدمة والشرح والتطبيقات.' },
-                { icon: GlobeIcon, color: 'sky', title: 'تخطيط المناهج', desc: 'بناء مناهج روحية ربع سنوية تضمن نمواً كنسياً متوازناً.' },
-                { icon: BookOpenIcon, color: 'purple', title: 'دراسة الكتاب مقدس', desc: 'تحليلات لاهوتية مع ربط فوري بتفاسير الآباء واللغات الأصلية.' },
-                { icon: ScrollIcon, color: 'rose', title: 'المساعد الآبائي', desc: 'قاعدة بيانات ضخمة من أقوال الآباء متاحة للبحث والحوار الذكي.' },
-                { icon: ImageIcon, color: 'emerald', title: 'تحليل الصور', desc: 'تحليل لاهوتي للأيقونات والصور التعليمية باستخدام الذكاء الاصطناعي.' },
-                { icon: StadiumIcon, color: 'indigo', title: 'بنك الألعاب', desc: 'بنك متجدد من الألعاب الحركية والذهنية الهادفة والمبتكرة.' },
-                { icon: ArchiveIcon, color: 'amber', title: 'المكتبة الخاصة', desc: 'حفظ وأرشفة كل تحضيراتك للرجوع إليها في أي وقت ومن أي جهاز.' },
-                { icon: DownloadIcon, color: 'slate', title: 'تصدير الدروس', desc: 'تحويل الدروس إلى ملفات PDF منسقة أو مشاركتها رقمياً بسهولة.' }
-            ].map((f, i) => (
-                <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-white/20 bg-slate-900/30 transition-all duration-500 group flex flex-col h-full hover:shadow-2xl"
-                >
-                    <div className={`w-14 h-14 bg-${f.color}-500/10 rounded-2xl flex items-center justify-center text-${f.color}-400 group-hover:scale-110 transition-all duration-500 mb-6 shadow-inner border border-white/5`}>
-                        <f.icon className="w-7 h-7" />
-                    </div>
-                    <h3 className="text-xl font-black text-white mb-3 font-display italic tracking-tight group-hover:text-amber-400 transition-colors uppercase">{f.title}</h3>
-                    <p className="text-slate-400 text-sm font-spiritual italic leading-relaxed mb-6 flex-grow opacity-80 group-hover:opacity-100">
-                        {f.desc}
-                    </p>
-                    <div className="pt-4 border-t border-white/5 flex gap-2">
-                        <span className="text-[9px] font-black bg-white/5 px-2.5 py-1.5 rounded-lg text-slate-500 uppercase tracking-widest">Premium AI</span>
-                    </div>
-                </motion.div>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {/* Lesson Builder */}
+            <div className="glass-card p-8 rounded-3xl border border-white/5 hover:border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent transition-all group flex flex-col">
+                <div className="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform mb-6">
+                    <PencilIcon className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 font-serif group-hover:text-orange-400 transition-colors">1. المحضّر الذكي</h3>
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
+                    أداة تقوم بصياغة درس مدارس الأحد بالكامل (عناصر، شرح، مقدمة، وخاتمة) بناءً على مراجع كنسية، ومخصصة حسب سن المخدومين.
+                </p>
+                <ul className="mt-auto space-y-2 text-sm text-slate-500">
+                    <li className="flex items-center gap-2"><span className="text-orange-500">✓</span> شرح قصصي للأطفال</li>
+                    <li className="flex items-center gap-2"><span className="text-orange-500">✓</span> عمق لاهوتي للشباب</li>
+                </ul>
+            </div>
+  
+            {/* Bible Reader */}
+            <div className="glass-card p-8 rounded-3xl border border-white/5 hover:border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent transition-all group flex flex-col">
+                <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform mb-6">
+                    <BookOpenIcon className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 font-serif group-hover:text-amber-400 transition-colors">2. الكتاب المقدس الدراسي</h3>
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
+                    ليس مجرد قراءة، بل دراسة. حدد أي آية لتحصل فوراً على تفسيرها العميق، وشرحها المبسط، وتحليل كلماتها في اللغات الأصلية.
+                </p>
+                <ul className="mt-auto space-y-2 text-sm text-slate-500">
+                    <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> تحليل عبري ويوناني</li>
+                    <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> ربط بتفاسير الآباء</li>
+                </ul>
+            </div>
+  
+            {/* Game Bank */}
+            <div className="glass-card p-8 rounded-3xl border border-white/5 hover:border-green-500/30 bg-gradient-to-br from-green-500/5 to-transparent transition-all group flex flex-col">
+                <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform mb-6">
+                    <StadiumIcon className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 font-serif group-hover:text-green-400 transition-colors">3. بنك الألعاب</h3>
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
+                    حل عملي لفقرة الألعاب. أخبر النظام بالمكان المتاح (فصل، ملعب، أتوبيس) والأدوات معك، وسيبتكر لك ألعاباً جديدة وممتعة.
+                </p>
+                <ul className="mt-auto space-y-2 text-sm text-slate-500">
+                    <li className="flex items-center gap-2"><span className="text-green-500">✓</span> ألعاب بدون أدوات</li>
+                    <li className="flex items-center gap-2"><span className="text-green-500">✓</span> ألعاب هادفة روحياً</li>
+                </ul>
+            </div>
+  
+             {/* Patristic Assistant */}
+             <div className="glass-card p-8 rounded-3xl border border-white/5 hover:border-sky-500/30 bg-gradient-to-br from-sky-500/5 to-transparent transition-all group flex flex-col">
+                <div className="w-16 h-16 bg-sky-500/10 rounded-2xl flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform mb-6">
+                    <AssistantIcon className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 font-serif group-hover:text-sky-400 transition-colors">4. المساعد الآبائي</h3>
+                <p className="text-slate-400 text-base leading-relaxed mb-4">
+                    بوت دردشة متخصص تم تدريبه على المراجع الأرثوذكسية فقط. اسأله عن أي طقس أو عقيدة وسيجيبك بدقة وموثوقية.
+                </p>
+                <ul className="mt-auto space-y-2 text-sm text-slate-500">
+                    <li className="flex items-center gap-2"><span className="text-sky-500">✓</span> إجابات موثقة</li>
+                    <li className="flex items-center gap-2"><span className="text-sky-500">✓</span> بحث في التاريخ الكنسي</li>
+                </ul>
+            </div>
         </div>
     );
   
     const referenceCategories = [
-      { id: '1', title: "تفاسير الكتاب المقدس", items: ["تفسير القمص تادرس يعقوب ملطي", "تفسير القمص أنطونيوس فكري", "Catena Aurea (السلسلة الذهبية)"] },
-      { id: '2', title: "التراث الآبائي", items: ["مجموعة نيقية وما بعد نيقية (NPNF)", "بستان الرهبان (التراث النسكي)", "عظات القديس يوحنا ذهبي الفم"] },
-      { id: '3', title: "الطقس والألحان", items: ["الخولاجي المقدس (الصلوات)", "السنكسار (سير الأبطال)", "الإبصلمودية (التسابيح)"] },
-      { id: '4', title: "اللغات والمخطوطات", items: ["العهد الجديد اليوناني (Codex Sinaiticus)", "قواميس اللغة القبطية العلمية", "مخطوطات وادي النطرون الرقمية"] },
-      { id: '5', title: "العقيدة واللاهوت", items: ["تجسد الكلمة (أثناسيوس الرسولي)", "المسيح واحد (كيرلس الكبير)", "موسوعة St-Takla اللاهوتية"] }
+      {
+        title: "قسم التفاسير الكتابية",
+        items: [
+          "تفسير القمص تادرس يعقوب ملطي",
+          "تفسير القمص أنطونيوس فكري",
+          "Catena Aurea (السلسلة الذهبية)"
+        ]
+      },
+      {
+        title: "قسم الآباء والباترولوجي",
+        items: [
+          "مجموعة نيقية وما بعد نيقية (NPNF)",
+          "بستان الرهبان",
+          "كتب د. نصحي عبد الشهيد",
+          "عظات القديس يوحنا ذهبي الفم (الميمر)"
+        ]
+      },
+      {
+        title: "قسم الطقس والليتورجيا",
+        items: [
+          "الخولاجي المقدس",
+          "السنكسار",
+          "التسبحة (الابصلمودية)"
+        ]
+      },
+      {
+        title: "قسم اللغات والمخطوطات",
+        items: [
+          "قاموس إقلاديوس لبيب (قبطي)",
+          "قواعد اللغة القبطية (موضي)",
+          "العهد الجديد اليوناني (Textus Receptus)",
+          "القاموس اليوناني التحليلي (Strong's Concordance)",
+          "موقع Bible Hub",
+          "موقع St. Shenouda the Archimandrite Coptic Society",
+          "أرشيف Coptic Scriptorium",
+          "Old Testament Textual Criticism - Online Digital Manuscripts",
+          "Center for the Study of New Testament Manuscripts (CSNTM)",
+          "Codex Sinaiticus"
+        ]
+      },
+      {
+        title: "قسم العقيدة واللاهوت",
+        items: [
+          "كتاب تجسد الكلمة (للقديس أثناسيوس)",
+          "موقع St-Takla.org",
+          "علم اللاهوت المقارن (للبابا شنودة الثالث)",
+          "كتاب المسيح واحد (للقديس كيرلس الأسكندري)"
+        ]
+      }
     ];
   
     const referencesContent = (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto pb-12" dir="rtl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto pb-8">
           {referenceCategories.map((category, idx) => (
-               <motion.div 
-                key={category.id} 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-amber-500/30 transition-all duration-500 bg-slate-900/40 shadow-xl group"
-               >
-                  <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 shadow-inner">
-                        <BookOpenIcon className="w-5 h-5" />
-                      </div>
-                      <h3 className="text-white font-black font-display italic text-lg tracking-tight uppercase">{category.title}</h3>
+               <div key={idx} className="glass-card p-5 rounded-xl border border-white/10 hover:border-amber-500/30 transition-all bg-[#0f172a]/40">
+                  <div className="flex items-center gap-3 mb-4 pb-2 border-b border-white/5">
+                      <BookOpenIcon className="w-5 h-5 text-amber-400" />
+                      <h3 className="text-white font-bold font-serif text-lg">{category.title}</h3>
                   </div>
-                  <ul className="space-y-4">
+                  <ul className="space-y-2">
                       {category.items.map((item, i) => (
-                          <li key={i} className="text-slate-400 text-sm font-spiritual italic flex items-start gap-4 group-hover:text-slate-200 transition-colors">
-                              <span className="w-2 h-2 rounded-full bg-amber-500/30 mt-1.5 shrink-0"></span>
+                          <li key={i} className="text-slate-300 text-sm font-serif flex items-start gap-2">
+                              <span className="text-amber-500/50 mt-1 text-xs">✦</span>
                               <span>{item}</span>
                           </li>
                       ))}
                   </ul>
-              </motion.div>
+              </div>
           ))}
       </div>
     );
   
     const aboutContent = (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center" dir="rtl">
-            <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="mb-12 relative"
-            >
-                <div className="absolute inset-0 bg-amber-500/30 blur-[100px] rounded-full scale-150"></div>
-                <div className="w-40 h-40 rounded-[3rem] bg-slate-950 border border-white/10 flex items-center justify-center relative z-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                    <SparklesIcon className="w-20 h-20 text-white drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]" />
-                </div>
-            </motion.div>
+        <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+            <div className="mb-8 relative">
+                <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full"></div>
+                <SparklesIcon className="w-24 h-24 text-white relative z-10 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]" />
+            </div>
             
-            <motion.h3 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-5xl font-black text-white mb-10 font-display italic tracking-tight"
-            >
-                الأصالة.. <span className="text-amber-400">بذكاء العصر</span>
-            </motion.h3>
+            <h3 className="text-4xl font-bold text-white mb-8 font-serif">الأصالة.. بلمسة ابتكار</h3>
             
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="max-w-4xl mx-auto space-y-8 text-xl text-slate-400 leading-relaxed font-spiritual italic"
-            >
+            <div className="max-w-4xl mx-auto space-y-6 text-lg text-slate-300 leading-relaxed font-light">
                 <p>
-                    مشروع <strong className="text-white not-italic">SPARK</strong> هو رؤية تكنولوجية كنسية، تهدف لاستثمار الذكاء الاصطناعي كخادم أمين في قلب كنيستنا الأرثوذكسية. نحن لا نسعى لاستبدال روحانية الخادم، بل لتمكينه فنياً وفكرياً.
+                    مشروع <strong>SPARK</strong> هو محاولة جادة لتقديم تكنولوجيا الذكاء الاصطناعي كخادم أمين في كنيستنا القبطية. نحن لا نهدف لاستبدال دور الخادم، بل لتمكينه.
                 </p>
                 <p>
-                    عبر أتمتة البحث المعمق في أمهات الكتب، وتنسيق الأفكار الإبداعية، واقتراح الوسائل التربوية المبهرة، نمنح الخادم "هبة الوقت"؛ الساعات التي كانت تضيع في التنسيق الجاف، أصبحت الآن وقتاً للصلاة وتفقد النفوس المخدومة.
+                    من خلال أتمتة عمليات البحث في المصادر، وتنسيق الأفكار، واقتراح الألعاب، نوفر للخادم الساعات الطويلة التي كان يقضيها في "الإعداد"، لكي يستثمرها في "الصلاة" و"الافتقاد" و"العمل الرعوي" الذي لا يمكن للآلة أن تقوم به.
                 </p>
-                <div className="pt-6">
-                    <p className="text-amber-500 font-bold text-2xl tracking-tight font-display">
-                        " التكنولوجيا أداة.. والروح هو المُحيي "
-                    </p>
-                </div>
-            </motion.div>
+                <p className="text-amber-400 font-medium">
+                    نحن نؤمن أن التكنولوجيا أداة، ولكن الروح هو من يحيي.
+                </p>
+            </div>
   
-            <div className="w-full max-w-lg h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-20"></div>
+            <div className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-12"></div>
   
-            <div className="flex flex-col items-center gap-4">
-               <span className="text-slate-600 text-xs font-black tracking-[0.4em] uppercase">Produced & Engineered By</span>
-               <p className="text-white font-display italic text-3xl font-black tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">MARK GEORGE</p>
-               <p className="text-slate-600 text-[10px] uppercase tracking-[0.2em] font-bold opacity-60">Dedicated to the Coptic Orthodox Heritage</p>
+            <div className="flex flex-col items-center gap-3">
+               <span className="text-slate-500 text-xs font-bold tracking-widest uppercase">تم التطوير بواسطة</span>
+               <p className="text-white font-serif text-2xl font-bold tracking-wide">Mark George</p>
+               <p className="text-slate-500 text-sm opacity-70">Dedicated to the Coptic Orthodox Church</p>
             </div>
         </div>
     );
@@ -185,46 +256,20 @@ const InfoModal: React.FC<InfoModalProps> = ({ activeModal, onClose }) => {
     };
 
     const titles: {[key: string]: string} = {
-        features: 'مميزات البرنامج',
-        methodology: 'منهجية العمل',
-        references: 'المصادر والمراجع',
-        about: 'عن البرنامج'
+        features: 'المميزات',
+        methodology: 'المنهجية',
+        references: 'المراجع',
+        about: 'عن المشروع'
     };
 
     return (
-        <AnimatePresence>
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[70] flex items-center justify-center p-4 md:p-10 no-print"
-            >
-                <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-3xl" onClick={onClose}></div>
-                
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 50 }}
-                    className="glass-card w-full max-w-7xl p-8 md:p-16 relative border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] rounded-[4rem] overflow-y-auto max-h-[95vh] bg-slate-950/60 z-10" 
-                    onClick={e => e.stopPropagation()}
-                >
-                    <button 
-                        onClick={onClose} 
-                        className="sticky top-0 float-left -mt-8 -ml-8 mb-4 p-4 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/5 z-50"
-                    >
-                        <XMarkIcon className="w-8 h-8" />
-                    </button>
-                    
-                    <div className="text-center mb-16" dir="rtl">
-                        <span className="text-amber-500/50 text-xs font-black tracking-[0.5em] uppercase mb-4 block">Information Terminal</span>
-                        <h2 className="text-4xl md:text-6xl font-black text-white font-display italic tracking-tight">{titles[activeModal] || ''}</h2>
-                        <div className="h-1.5 w-24 bg-amber-500 mx-auto rounded-full mt-6 opacity-30"></div>
-                    </div>
-                    
-                    {renderModalContent()}
-                </motion.div>
-            </motion.div>
-        </AnimatePresence>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+            <div className="glass-card w-full max-w-7xl p-8 relative border border-white/20 shadow-2xl rounded-3xl overflow-y-auto max-h-[90vh] bg-[#0f172a]/95" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"><XMarkIcon className="w-6 h-6" /></button>
+                <h2 className="text-3xl font-bold text-white mb-8 font-serif border-b border-white/10 pb-4 text-center">{titles[activeModal] || ''}</h2>
+                {renderModalContent()}
+            </div>
+        </div>
     );
 };
 

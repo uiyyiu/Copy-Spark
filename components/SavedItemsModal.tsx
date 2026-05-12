@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { getSavedLessons, deleteSavedLesson } from '../services/supabase';
 import { XMarkIcon, TrashIcon, ArchiveIcon, SpinnerIcon, BookmarkIcon, ChevronDownIcon } from './icons';
 import { formatTextToHtml } from '../services/exportService';
@@ -54,153 +54,108 @@ const SavedItemsModal: React.FC<SavedItemsModalProps> = ({ isOpen, onClose, user
     const renderItemContent = (item: any) => {
         const content = item.content;
         
+        // Handle generic text content types from BibleReader
         if (content && (content.type === 'simple-explanation' || content.type === 'interpretation')) {
              return (
                 <div 
-                    className="formatted-content font-spiritual italic text-slate-300 leading-relaxed text-lg"
+                    className="formatted-content spark-body-serif text-slate-200"
                     dangerouslySetInnerHTML={{ __html: formatTextToHtml(content.body) }} 
                 />
              );
         }
 
+        // Handle Lesson Plans (assuming structure from generateLessonIdeas)
         if (content && (content.lessonBody || content.lessonExplanation)) {
             const body = content.lessonBody || content.lessonExplanation;
             return (
                 <div 
-                    className="formatted-content font-spiritual italic text-slate-300 leading-relaxed text-lg"
+                    className="formatted-content spark-body-serif text-slate-200"
                     dangerouslySetInnerHTML={{ __html: formatTextToHtml(body) }} 
                 />
             );
         }
 
-        return <p className="text-slate-500 font-spiritual italic">لا يمكن عرض محتوى هذا العنصر فنيّاً.</p>;
+        return <p className="text-slate-400">لا يمكن عرض محتوى هذا العنصر.</p>;
     };
 
+    if (!isOpen) return null;
+
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[80] flex items-center justify-center p-4 md:p-10 no-print"
-                    dir="rtl"
-                >
-                    <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-3xl" onClick={onClose}></div>
-                    
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95, y: 50 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 50 }}
-                        className="glass-card w-full max-w-5xl h-[85vh] relative border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] rounded-[4rem] overflow-hidden bg-slate-950/60 z-10 flex flex-col" 
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Header */}
-                        <div className="p-10 pb-6 border-b border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 rounded-[1.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
-                                    <ArchiveIcon className="w-8 h-8" />
-                                </div>
-                                <div className="text-right">
-                                    <h2 className="text-3xl font-black text-white font-display italic tracking-tight uppercase">خزانة السحاب</h2>
-                                    <p className="text-[10px] text-slate-500 font-black tracking-[0.4em] uppercase mt-1">Archived Spiritual Lessons</p>
-                                </div>
-                            </div>
-                            <button onClick={onClose} className="p-4 rounded-2xl text-slate-600 hover:text-white hover:bg-white/5 transition-all">
-                                <XMarkIcon className="w-8 h-8" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+            <div className="glass-card w-full max-w-3xl p-6 relative border border-white/20 shadow-2xl rounded-3xl bg-[#0f172a]/95 flex flex-col max-h-[85vh] h-[85vh]" onClick={e => e.stopPropagation()}>
+                
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10 flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                        <ArchiveIcon className="w-6 h-6 text-amber-400" />
+                        <h2 className="text-2xl font-bold text-white font-serif">المحفوظات</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto custom-scrollbar">
+                    {selectedItem ? (
+                        <div className="animate-fade-in h-full flex flex-col">
+                            <button 
+                                onClick={() => setSelectedItem(null)}
+                                className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 text-sm font-bold w-fit"
+                            >
+                                <ChevronDownIcon className="w-4 h-4 rotate-90" />
+                                عودة للقائمة
                             </button>
+                            <h3 className="text-xl font-bold text-amber-400 mb-4 font-serif">{selectedItem.title}</h3>
+                            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                {renderItemContent(selectedItem)}
+                            </div>
                         </div>
-
-                        {/* Content Area */}
-                        <div className="flex-grow overflow-y-auto p-10 custom-scrollbar bg-slate-950/20 shadow-inner">
-                            {selectedItem ? (
-                                <motion.div 
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="h-full flex flex-col"
-                                >
-                                    <button 
-                                        onClick={() => setSelectedItem(null)}
-                                        className="flex items-center gap-3 text-slate-500 hover:text-amber-500 mb-8 font-black font-display italic uppercase tracking-widest text-xs transition-all group"
-                                    >
-                                        <ChevronDownIcon className="w-5 h-5 rotate-90 group-hover:-translate-x-1 transition-transform" />
-                                        العودة لأرشفة الدروس
-                                    </button>
-                                    
-                                    <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
-                                        <h3 className="text-4xl font-black text-amber-400 font-display italic tracking-tight">{selectedItem.title}</h3>
-                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl">
-                                            {new Date(selectedItem.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}
-                                        </span>
-                                    </div>
-
-                                    <div className="glass-card bg-slate-900/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-                                        {renderItemContent(selectedItem)}
-                                    </div>
-                                </motion.div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {isLoading ? (
-                                        <div className="flex flex-col items-center justify-center h-80 gap-6">
-                                            <div className="w-16 h-16 rounded-full border-4 border-amber-500/10 border-t-amber-500 animate-spin"></div>
-                                            <p className="text-slate-600 font-display italic uppercase tracking-widest text-[10px] animate-pulse">Synchronizing Cloud Archive...</p>
-                                        </div>
-                                    ) : savedItems.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-80 text-center gap-6 opacity-40">
-                                            <BookmarkIcon className="w-20 h-20 text-slate-700" />
-                                            <p className="text-xl text-slate-500 font-spiritual italic">لم تكتمل أرشفة أي دروس بعد..</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                                            {savedItems.map((item, idx) => (
-                                                <motion.div 
-                                                    key={item.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.05 }}
-                                                    onClick={() => setSelectedItem(item)}
-                                                    className="glass-card bg-slate-900/60 border border-white/5 hover:border-amber-500/30 rounded-[2rem] p-8 transition-all duration-500 hover:bg-slate-900/90 group flex justify-between items-center cursor-pointer shadow-xl hover:-translate-y-2"
-                                                >
-                                                    <div className="flex-grow">
-                                                        <h3 className="text-xl font-black text-white mb-2 font-display italic tracking-tight group-hover:text-amber-400 transition-colors uppercase">{item.title}</h3>
-                                                        <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.3em] font-spiritual">
-                                                            {new Date(item.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <button 
-                                                            onClick={(e) => handleDelete(item.id, e)}
-                                                            disabled={deleteLoading === item.id}
-                                                            className="w-12 h-12 rounded-xl text-slate-700 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                                                        >
-                                                            {deleteLoading === item.id ? (
-                                                                <SpinnerIcon className="w-5 h-5 animate-spin" />
-                                                            ) : (
-                                                                <TrashIcon className="w-6 h-6" />
-                                                            )}
-                                                        </button>
-                                                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-500">
-                                                            <ChevronDownIcon className="w-5 h-5 -rotate-90" />
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    )}
+                    ) : (
+                        <div className="space-y-3">
+                            {isLoading ? (
+                                <div className="flex flex-col items-center justify-center h-40">
+                                    <SpinnerIcon className="w-10 h-10 text-amber-500 animate-spin mb-4" />
+                                    <p className="text-slate-400">جاري تحميل محفوظاتك...</p>
                                 </div>
+                            ) : savedItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-40 text-center">
+                                    <BookmarkIcon className="w-12 h-12 text-slate-600 mb-4" />
+                                    <p className="text-slate-400 text-lg">لم تقم بحفظ أي دروس بعد.</p>
+                                </div>
+                            ) : (
+                                savedItems.map((item) => (
+                                    <div 
+                                        key={item.id} 
+                                        onClick={() => setSelectedItem(item)}
+                                        className="bg-white/5 border border-white/5 hover:border-amber-500/30 rounded-xl p-4 transition-all hover:bg-white/10 group flex justify-between items-center cursor-pointer"
+                                    >
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white mb-1 group-hover:text-amber-400 transition-colors">{item.title}</h3>
+                                            <p className="text-xs text-slate-400">
+                                                {new Date(item.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                onClick={(e) => handleDelete(item.id, e)}
+                                                disabled={deleteLoading === item.id}
+                                                className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                title="حذف"
+                                            >
+                                                {deleteLoading === item.id ? (
+                                                    <SpinnerIcon className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    <TrashIcon className="w-5 h-5" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
                             )}
                         </div>
-
-                        {/* Footer Info */}
-                        {!selectedItem && (
-                            <div className="p-10 border-t border-white/5 bg-slate-950/40 text-center">
-                                <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em]">Every archived lesson is a seed of eternity stored in your digital cloud</p>
-                            </div>
-                        )}
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 

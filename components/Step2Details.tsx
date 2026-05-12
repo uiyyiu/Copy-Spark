@@ -1,7 +1,7 @@
+
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import type { AgeGroup } from '../types';
-import { LightBulbIcon, ImageIcon, TrashIcon, BookOpenIcon, UsersIcon, SparklesIcon } from './icons';
+import { LightBulbIcon, ImageIcon, TrashIcon, BookOpenIcon, UsersIcon } from './icons';
 import SmartAutoComplete from './SmartAutoComplete';
 
 interface FormData {
@@ -39,6 +39,12 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
     setFormData(prev => ({ ...prev, ageGroup: group }));
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        onSubmit();
+    }
+  };
+  
   const fileToImageObject = (file: File): Promise<{ data: string; mimeType: string }> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -58,13 +64,24 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
   const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
+
     const fileList = [...files];
+
+    for (const file of fileList) {
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            alert(`حجم الصورة "${file.name}" كبير جداً. من فضلك اختر صورة أصغر من 10MB.`);
+            return;
+        }
+    }
+
     try {
         const newImages = await Promise.all(fileList.map(fileToImageObject));
         setFormData(prev => ({ ...prev, lessonImages: [...prev.lessonImages, ...newImages] }));
     } catch (error) {
         console.error("Error reading files:", error);
+        alert("حدث خطأ أثناء قراءة الصور.");
     }
+    
     event.target.value = '';
   };
 
@@ -73,144 +90,120 @@ const Step2Details: React.FC<Step2DetailsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto" dir="rtl">
-        <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-        >
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 font-display italic tracking-tight">صقل التجربة</h2>
-            <div className="h-1.5 w-24 bg-amber-500 mx-auto rounded-full mb-6"></div>
-            <p className="text-xl text-slate-400 font-spiritual italic">أضف التفاصيل النهائية ليصبح الدرس تحفة فنية روحية.</p>
-        </motion.div>
-
-      <form onSubmit={(e) => {e.preventDefault(); onSubmit();}} className="space-y-8">
+    <div className="animate-fade-in">
+        <div className="text-center mb-8">
+            <h2 className="spark-h1 text-white drop-shadow-md">الخطوة 2: تفاصيل إضافية</h2>
+            <p className="spark-body text-slate-300 mt-2">أضف بعض التفاصيل الاختيارية لنتائج أكثر تخصيصًا.</p>
+        </div>
+      <form onSubmit={(e) => {e.preventDefault(); onSubmit();}} className="space-y-6 mt-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Scripture Verse Card */}
-            <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="glass-card p-8 rounded-[2.5rem] border border-white/5 bg-slate-900/30 shadow-2xl relative overflow-hidden"
-            >
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-amber-400 border border-white/5">
-                        <BookOpenIcon className="w-5 h-5" />
-                    </div>
-                    <label htmlFor="scriptureVerse" className="text-xl font-display font-black text-white italic">الشاهد الكتابي</label>
-                </div>
+        {/* Scripture Verse Card */}
+        <div className="glass-card p-6 rounded-2xl shadow-sm transition-colors">
+            <div className="flex items-center gap-3 mb-4">
+                <BookOpenIcon className="w-5 h-5 text-white" />
+                <label htmlFor="scriptureVerse" className="spark-h3 text-white">
+                    آية الدرس (اختياري)
+                </label>
+            </div>
+            <div>
                 <SmartAutoComplete
                     id="scriptureVerse"
                     type="verse"
                     value={formData.scriptureVerse}
                     onChange={handleFieldChange}
-                    placeholder="مثال: «أَمَّا أَنَا فَبِكَثْرَةِ رَحْمَتِكَ أَدْخُلُ بَيْتَكَ»"
-                    className="w-full bg-slate-950/40 border border-white/5 rounded-2xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all text-right font-spiritual italic text-lg px-6 py-4 placeholder-slate-600 text-white shadow-inner"
+                    onKeyDown={handleKeyDown}
+                    placeholder="مثال: «أَمَّا أَنَا فَبِكَثْرَةِ رَحْمَتِكَ أَدْخُلُ بَيْتَكَ» (مز 5: 7)"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-[var(--accent-gold)] focus:border-[var(--accent-gold)] transition text-right spark-body px-4 py-3 text-white placeholder-slate-500"
                 />
-            </motion.div>
+                <p className="spark-caption text-slate-400 text-right mt-2">إذا قمت بإضافة آية، سيتم توليد أفكار ألعاب خاصة بها.</p>
+            </div>
+        </div>
 
-            {/* Age Group Card */}
-            <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="glass-card p-8 rounded-[2.5rem] border border-white/5 bg-slate-900/30 shadow-2xl"
-            >
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-sky-400 border border-white/5">
-                        <UsersIcon className="w-5 h-5" />
-                    </div>
-                    <label className="text-xl font-display font-black text-white italic">الفئة المستهدفة</label>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
+        {/* Age Group Card */}
+        <div id="age-group-selector" className="glass-card p-6 rounded-2xl shadow-sm transition-colors">
+            <div className="flex items-center gap-3 mb-4">
+                <UsersIcon className="w-5 h-5 text-white" />
+                <label className="spark-h3 text-white">
+                    المرحلة العمرية
+                </label>
+            </div>
+            <div>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {ageGroups.map((group) => (
                         <button
                             key={group}
                             type="button"
                             onClick={() => handleAgeGroupChange(group)}
-                            className={`px-4 py-3 text-sm font-black rounded-xl transition-all duration-300 border font-display italic tracking-tight ${
+                            className={`px-3 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
                                 formData.ageGroup === group
-                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]'
-                                    : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
+                                    ? 'bg-[var(--accent-gold)] text-white border-[var(--accent-gold-hover)] shadow-sm'
+                                    : 'bg-transparent text-slate-300 border-white/10 hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]'
                             }`}
                         >
                             {group}
                         </button>
                     ))}
                 </div>
-            </motion.div>
+            </div>
         </div>
         
         {/* Image Upload Card */}
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-10 rounded-[3rem] border border-white/5 bg-slate-900/30 shadow-2xl"
-        >
-             <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/5">
-                    <ImageIcon className="w-5 h-5" />
-                </div>
-                <label className="text-xl font-display font-black text-white italic">تحليل الوسائل البصرية</label>
+        <div id="image-upload-container" className="glass-card p-6 rounded-2xl shadow-sm transition-colors">
+             <div className="flex items-center gap-3 mb-4">
+                <ImageIcon className="w-5 h-5 text-white" />
+                <label className="spark-h3 text-white">
+                    شرح الدرس (اختياري)
+                </label>
             </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-6">
-                <AnimatePresence>
+            <div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                     {formData.lessonImages.map((image, index) => (
-                        <motion.div 
-                            key={index} 
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.8, opacity: 0 }}
-                            className="relative group aspect-square"
-                        >
+                        <div key={index} className="relative group aspect-square">
                             <img 
                                 src={`data:${image.mimeType};base64,${image.data}`} 
-                                alt="Preview" 
-                                className="w-full h-full object-cover rounded-[1.5rem] border border-white/10 shadow-2xl transition-all group-hover:scale-105" 
+                                alt={`معاينة الشرح ${index + 1}`} 
+                                className="w-full h-full object-cover rounded-lg border border-white/10" 
                             />
                             <button 
                                 onClick={() => handleRemoveImage(index)} 
-                                className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-2 hover:bg-rose-600 transition-all shadow-xl opacity-0 group-hover:opacity-100"
+                                className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-opacity opacity-0 group-hover:opacity-100"
+                                aria-label="Remove image"
                             >
                                 <TrashIcon className="w-4 h-4" />
                             </button>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-
-                <label htmlFor="file-upload" className="relative cursor-pointer bg-slate-950/40 rounded-[1.5rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center w-full aspect-square hover:border-amber-500/50 hover:bg-white/5 transition-all group">
-                    <div className="text-center p-4">
-                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                            <ImageIcon className="w-6 h-6 text-slate-500 group-hover:text-amber-400" />
                         </div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">إضافة صورة</p>
-                    </div>
-                    <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/webp" onChange={handleImageChange} multiple />
-                </label>
+                    ))}
+                    <label htmlFor="file-upload" className="relative cursor-pointer bg-transparent rounded-lg border-2 border-dashed border-white/20 flex flex-col items-center justify-center w-full aspect-square hover:border-[var(--accent-gold)] transition-colors">
+                        <div className="text-center p-2">
+                            <ImageIcon className="mx-auto h-8 w-8 text-slate-400" />
+                            <p className="mt-2 spark-caption text-slate-400">
+                                <span className="font-semibold text-[var(--accent-gold)]">ارفع صورة</span>
+                            </p>
+                        </div>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/png, image/jpeg, image/webp" onChange={handleImageChange} multiple />
+                    </label>
+                </div>
+                <p className="spark-caption text-slate-400 text-right mt-2">يمكنك رفع عدة صور لشرح الدرس. (PNG, JPG, WEBP)</p>
             </div>
-            <p className="text-xs text-slate-500 font-spiritual italic mt-6">* ارفع صورة لأيقونة أو وسيلة إيضاح لدمجها في التحضير</p>
-        </motion.div>
+        </div>
 
-        <div className="flex justify-between items-center pt-8 gap-6">
+        <div className="flex justify-between items-center pt-2">
           <button
             type="button"
             onClick={onBack}
-            className="px-10 py-5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 rounded-2xl transition-all text-sm font-black border border-white/5 font-display italic tracking-widest uppercase"
+            className="px-6 py-3 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold border border-white/10"
           >
-            رجوع
+            السابق
           </button>
-          
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
+            id="generate-ideas-button"
             type="submit"
             disabled={isLoading}
-            className="flex-grow flex items-center justify-center gap-4 bg-white text-black font-black py-5 px-8 rounded-2xl hover:shadow-[0_0_50px_rgba(255,255,255,0.3)] transition-all duration-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed group relative overflow-hidden"
+            className="w-1/2 flex items-center justify-center gap-3 bg-[var(--accent-gold)] text-white font-bold py-3 px-6 rounded-lg hover:bg-[var(--accent-gold-hover)] transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span className="relative z-10 font-display italic text-xl">توليد المحتوى الذكي</span>
-            <SparklesIcon className="w-6 h-6 relative z-10 animate-pulse" />
-          </motion.button>
+            <LightBulbIcon className="w-6 h-6" />
+            <span className="spark-body font-bold">ولّد أفكار</span>
+          </button>
         </div>
       </form>
     </div>

@@ -1,6 +1,6 @@
+
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { StadiumIcon, UsersIcon, TargetIcon, SparklesIcon } from './icons';
+import { StadiumIcon, UsersIcon, TargetIcon } from './icons';
 
 interface GameBankFormProps {
     onSubmit: (count: string, place: string, tools: string, goal: string) => void;
@@ -21,129 +21,87 @@ const GameBankForm: React.FC<GameBankFormProps> = ({ onSubmit, isLoading }) => {
     };
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-4xl mx-auto"
-            dir="rtl"
-        >
-            <div className="text-center mb-16">
-                <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="w-20 h-20 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6 shadow-2xl"
-                >
-                    <StadiumIcon className="w-10 h-10 text-emerald-400" />
-                </motion.div>
-                <h2 className="text-5xl font-black text-white mb-6 font-display italic tracking-tight uppercase">بنك الأنشطة</h2>
-                <p className="text-xl text-slate-400 max-w-2xl mx-auto font-spiritual italic">
-                    حوّل إمكانياتك المتاحة إلى تجربة تفاعلية وأنشطة هادفة للمخدومين.
+        <div className="w-full max-w-3xl mx-auto animate-fade-in-up">
+            <div className="text-center mb-10">
+                <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-md font-serif">
+                    بنك الألعاب
+                </h2>
+                <p className="text-lg text-white/90 font-medium drop-shadow">
+                    اقترح ألعاباً تناسب إمكانياتك الحالية
                 </p>
-                <div className="h-1.5 w-24 bg-emerald-500 mx-auto rounded-full mt-8 opacity-30"></div>
             </div>
 
-            <div className="glass-card p-10 md:p-14 rounded-[3.5rem] border border-white/5 bg-slate-950/40 backdrop-blur-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
-                <form onSubmit={handleSubmit} className="space-y-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 mb-2">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                    <UsersIcon className="w-5 h-5" />
-                                </div>
-                                <label className="text-white font-black font-display italic tracking-tight uppercase">عدد المخدومين</label>
-                            </div>
-                            <input 
-                                type="text" 
-                                value={count} 
-                                onChange={(e) => setCount(e.target.value)}
-                                placeholder="مثال: 50 بطل، مجموعة صغيرة، كشافة..."
-                                className="w-full bg-slate-900 border border-white/5 rounded-2xl p-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-spiritual italic text-lg"
-                                required
-                            />
+            <div className="glass-card p-6 md:p-10 rounded-3xl shadow-2xl border border-green-500/30 bg-gradient-to-b from-green-900/20 to-[#0f172a]/60 backdrop-blur-md">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <UsersIcon className="w-5 h-5 text-green-400" />
+                            <label className="spark-h3 text-white">عدد المشاركين</label>
                         </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 mb-2">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                    <StadiumIcon className="w-5 h-5" />
-                                </div>
-                                <label className="text-white font-black font-display italic tracking-tight uppercase">المكان المتاح</label>
-                            </div>
-                            <input 
-                                type="text" 
-                                value={place} 
-                                onChange={(e) => setPlace(e.target.value)}
-                                placeholder="مثال: قصر ملكي، ملعب مفتوح، رحلة صيفية..."
-                                className="w-full bg-slate-900 border border-white/5 rounded-2xl p-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-spiritual italic text-lg"
-                                required
-                            />
-                        </div>
+                        <input 
+                            type="text" 
+                            value={count} 
+                            onChange={(e) => setCount(e.target.value)}
+                            placeholder="مثال: 50 طفل، مجموعة صغيرة، فصل كامل..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all"
+                            required
+                        />
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                <TargetIcon className="w-5 h-5" />
-                            </div>
-                            <label className="text-white font-black font-display italic tracking-tight uppercase">الهدف الروحي</label>
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <StadiumIcon className="w-5 h-5 text-green-400" />
+                            <label className="spark-h3 text-white">المكان المتاح</label>
+                        </div>
+                        <input 
+                            type="text" 
+                            value={place} 
+                            onChange={(e) => setPlace(e.target.value)}
+                            placeholder="مثال: داخل الفصل، ملعب مفتوح، الأتوبيس..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <TargetIcon className="w-5 h-5 text-green-400" />
+                            <label className="spark-h3 text-white">الهدف (اختياري)</label>
                         </div>
                         <input 
                             type="text" 
                             value={goal} 
                             onChange={(e) => setGoal(e.target.value)}
-                            placeholder="مثال: روح التعاون، ثمار المحبة، حفظ آية ذهبية..."
-                            className="w-full bg-slate-900 border border-white/5 rounded-2xl p-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-spiritual italic text-lg"
+                            placeholder="مثال: التعاون، المحبة، حفظ آية..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all"
                         />
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black pr-4">سيتولى الذكاء الاصطناعي برمجت اللعبة لخدمة هذا الهدف بدقة.</p>
+                        <p className="text-xs text-slate-400 mt-1 mr-1">إذا كتبت هدفاً، ستكون الألعاب مصممة لخدمته.</p>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                <SparklesIcon className="w-5 h-5" />
-                            </div>
-                            <label className="text-white font-black font-display italic tracking-tight uppercase">الأدوات المتاحة</label>
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <label className="spark-h3 text-white">الأدوات المتاحة (اختياري)</label>
                         </div>
                         <input 
                             type="text" 
                             value={tools} 
                             onChange={(e) => setTools(e.target.value)}
-                            placeholder="مثال: كرة من الخيال، خيوط ملونة، أو بلا أدوات على الإطلاق..."
-                            className="w-full bg-slate-900 border border-white/5 rounded-2xl p-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-spiritual italic text-lg"
+                            placeholder="مثال: كرة، ورقة وقلم، كراسي، بدون أدوات..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all"
                         />
                     </div>
 
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                    <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-6 px-8 rounded-[2rem] bg-emerald-500 text-slate-950 font-black font-display italic text-xl tracking-tighter uppercase disabled:opacity-30 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center justify-center gap-4 group"
+                        className="w-full text-white font-bold text-lg py-4 px-6 rounded-xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all shadow-lg hover:shadow-green-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transform hover:scale-[1.01]"
                     >
-                        {isLoading ? (
-                            <>
-                                <SpinnerIcon className="w-6 h-6 animate-spin" />
-                                <span>جاري هندسة الأفكار...</span>
-                            </>
-                        ) : (
-                            <>
-                                <SparklesIcon className="w-6 h-6 group-hover:animate-spin transition-all" />
-                                <span>ابتكار الألعاب</span>
-                            </>
-                        )}
-                    </motion.button>
+                        {isLoading ? 'جاري البحث...' : 'اقترح الألعاب'}
+                    </button>
                 </form>
             </div>
-            <p className="text-center text-slate-600 text-[10px] uppercase font-black tracking-[0.3em] mt-10 opacity-50">Creative Interactive Engineering Powered by SPARK</p>
-        </motion.div>
+        </div>
     );
 };
 
 export default GameBankForm;
-
-const SpinnerIcon = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
