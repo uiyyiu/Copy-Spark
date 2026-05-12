@@ -1,7 +1,7 @@
-
 import React, { useMemo } from 'react';
+import { motion } from 'motion/react';
 import type { AgeGroup } from '../types';
-import { PencilIcon, TargetIcon } from './icons';
+import { PencilIcon, TargetIcon, SparklesIcon } from './icons';
 import SmartAutoComplete from './SmartAutoComplete';
 import { ToolId } from './ToolsDashboard';
 
@@ -31,36 +31,46 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
     return formData.lessonTitle.trim().length < 5 || formData.spiritualObjective.trim().length < 20;
   }, [formData.lessonTitle, formData.spiritualObjective]);
 
-  const getTitles = () => {
-      // Since Step1Basics is currently mainly used for the Lesson Builder, and other tools like Game Bank have their own forms,
-      // we use the default title. Invalid cases for 'games', 'visuals', 'icebreakers' were removed as they don't match ToolId type.
-      return { main: 'حضّر درسك', sub: 'مساعدك الشخصي لتحويل الهدف الروحي إلى خطة درس متكاملة' };
-  }
-
-  const titles = getTitles();
+  const titles = { 
+    main: 'تحضير الدرس', 
+    sub: 'أدخل بيانات الدرس لبناء خطة متكاملة' 
+  };
 
   return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in-up">
+    <div className="w-full max-w-3xl mx-auto" dir="rtl">
       
-      {/* Title Section - Styled for Hero */}
-      <div className="text-center mb-10">
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-md" style={{fontFamily: 'Noto Naskh Arabic, serif'}}>
-            {titles.main} <span className="text-[var(--accent-gold)]">بلمسة إبداع</span>
+      {/* Title Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-6 font-display italic tracking-tight">
+            {titles.main} <span className="text-amber-400">بأسلوب عصري</span>
         </h2>
-        <p className="text-lg text-white/90 font-medium drop-shadow">
+        <div className="h-1.5 w-24 bg-amber-500 mx-auto rounded-full mb-6"></div>
+        <p className="text-xl text-slate-400 font-spiritual italic">
             {titles.sub}
         </p>
-      </div>
+      </motion.div>
 
-      {/* Glassmorphism Form Card */}
-      <div className="glass-card p-6 md:p-10 rounded-3xl shadow-2xl">
-          <form onSubmit={(e) => { e.preventDefault(); if(!isNextDisabled) onNext(); }} className="space-y-6">
+      {/* Form Card */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-card p-8 md:p-14 rounded-[3rem] border border-white/5 bg-slate-900/30 shadow-2xl relative overflow-hidden"
+      >
+          <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full"></div>
+          
+          <form onSubmit={(e) => { e.preventDefault(); if(!isNextDisabled) onNext(); }} className="space-y-10 relative z-10">
             
             {/* Lesson Title */}
             <div>
-                <div className="flex items-center gap-2 mb-2">
-                    <PencilIcon className="w-5 h-5 text-[var(--text-light-primary)] dark:text-white" />
-                    <label htmlFor="lessonTitle" className="spark-h3 text-[var(--text-light-primary)] dark:text-white" style={{margin: 0}}>
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-amber-400 border border-white/5">
+                        <PencilIcon className="w-5 h-5" />
+                    </div>
+                    <label htmlFor="lessonTitle" className="text-xl font-display font-black text-white italic">
                         عنوان الدرس
                     </label>
                 </div>
@@ -69,8 +79,8 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
                     type="title"
                     value={formData.lessonTitle}
                     onChange={handleChange}
-                    placeholder="مثال: السامري الصالح"
-                    className="w-full bg-white/50 dark:bg-black/20 border border-gray-200/50 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[var(--accent-gold)] focus:border-[var(--accent-gold)] transition text-right spark-body px-5 py-4 placeholder-gray-500 dark:placeholder-gray-300 text-[var(--text-light-primary)] dark:text-white shadow-inner"
+                    placeholder="مثال: قصة السامري الصالح"
+                    className="w-full bg-slate-950/40 border border-white/5 rounded-2xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all text-right font-spiritual italic text-lg px-6 py-5 placeholder-slate-600 text-white shadow-inner"
                     required
                     minLength={5}
                 />
@@ -78,9 +88,11 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
 
             {/* Spiritual Objective */}
             <div>
-                 <div className="flex items-center gap-2 mb-2">
-                    <TargetIcon className="w-5 h-5 text-[var(--text-light-primary)] dark:text-white" />
-                    <label htmlFor="spiritualObjective" className="spark-h3 text-[var(--text-light-primary)] dark:text-white" style={{margin: 0}}>
+                 <div className="flex items-center gap-4 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/5">
+                        <TargetIcon className="w-5 h-5" />
+                    </div>
+                    <label htmlFor="spiritualObjective" className="text-xl font-display font-black text-white italic">
                         الهدف الروحي
                     </label>
                 </div>
@@ -91,34 +103,35 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
                     isTextarea={true}
                     value={formData.spiritualObjective}
                     onChange={handleChange}
-                    rows={3}
-                    placeholder="مثال: أن أفهم أن محبة قريبي تعني مساعدة أي شخص محتاج، بغض النظر عن هويته."
-                    className="w-full bg-white/50 dark:bg-black/20 border border-gray-200/50 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[var(--accent-gold)] focus:border-[var(--accent-gold)] transition resize-none text-right spark-body px-5 py-4 placeholder-gray-500 dark:placeholder-gray-300 text-[var(--text-light-primary)] dark:text-white shadow-inner"
+                    rows={4}
+                    placeholder="ما الذي تريد أن تتركه في قلب وعقل المخدوم؟"
+                    className="w-full bg-slate-950/40 border border-white/5 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all resize-none text-right font-spiritual italic text-lg px-6 py-5 placeholder-slate-600 text-white shadow-inner leading-relaxed"
                     required
                     minLength={20}
                 />
             </div>
             
-            <div className="pt-2">
-                <button
+            <div className="pt-6">
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isNextDisabled}
-                    className="w-full text-white font-bold text-lg py-4 px-6 rounded-xl hover:bg-[var(--accent-gold-hover)] transition-all duration-300 transform hover:scale-[1.02] shadow-lg disabled:bg-gray-400 disabled:dark:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
-                    style={{
-                        backgroundColor: isNextDisabled ? undefined : 'var(--accent-gold)',
-                    }}
+                    className="group relative w-full overflow-hidden text-black font-black text-xl py-6 rounded-2xl bg-white hover:shadow-[0_0_50px_rgba(255,255,255,0.3)] transition-all duration-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-4"
                 >
-                    <span>ابدأ التحضير</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 rotate-180">
-                        <path fillRule="evenodd" d="M16.72 7.72a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 0 1 0 1.06l-3.75 3.75a.75.75 0 1 1-1.06-1.06l2.47-2.47H3a.75.75 0 0 1 0-1.5h16.19l-2.47-2.47a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
-                    </svg>
-                </button>
+                    <span className="relative z-10 font-display italic">التالي</span>
+                    <SparklesIcon className="w-6 h-6 animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </motion.button>
             </div>
           </form>
+      </motion.div>
+      
+      <div className="mt-8 flex justify-center gap-2">
+          <div className="w-12 h-1.5 rounded-full bg-amber-500"></div>
+          <div className="w-12 h-1.5 rounded-full bg-slate-800"></div>
       </div>
-      <div className="mt-4 text-center text-white/60 text-sm font-medium">
-          <span>خطوة 1 من 2</span>
-      </div>
+      <p className="mt-4 text-center text-slate-500 text-xs font-bold uppercase tracking-[0.3em]">Step 01 / 02</p>
     </div>
   );
 };
