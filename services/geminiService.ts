@@ -272,7 +272,6 @@ export interface CurriculumLesson {
     summary: string;
     linkToObjective: string;
     activityIdea: string;
-    methodology: string;
 }
 
 export async function generateCurriculum(
@@ -295,10 +294,9 @@ export async function generateCurriculum(
                             scripture: { type: Type.STRING },
                             summary: { type: Type.STRING },
                             linkToObjective: { type: Type.STRING },
-                            activityIdea: { type: Type.STRING },
-                            methodology: { type: Type.STRING }
+                            activityIdea: { type: Type.STRING }
                         },
-                        required: ["week", "title", "scripture", "summary", "linkToObjective", "activityIdea", "methodology"]
+                        required: ["week", "title", "scripture", "summary", "linkToObjective", "activityIdea"]
                     }
                 }
             }
@@ -321,7 +319,6 @@ export async function generateCurriculum(
         - scripture: Bible Reference (e.g., Luke 15:11-32).
         - summary: Brief summary of the story/content.
         - linkToObjective: How this specific story teaches the main objective.
-        - methodology: The pedagogical approach for this lesson (e.g., Interactive Storytelling, Collaborative Discussion, Gamified Learning, Role-play, etc.) specifically tailored to the age group. Be creative and professional in describing the "How to teach" strategy.
         - activityIdea: A simple activity or interaction for this lesson.
         `;
 
