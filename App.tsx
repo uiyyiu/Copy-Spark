@@ -291,7 +291,7 @@ function App() {
       }
   };
 
-  const handlePatristicMessage = async (userMessage: string) => {
+  const handlePatristicMessage = async (userMessage: string, depth: 'kids' | 'father' | 'apologetics' = 'father') => {
       if (!userMessage.trim()) return;
       
       const newHistory = [...patristicMessages, { role: 'user' as const, content: userMessage }];
@@ -301,7 +301,7 @@ function App() {
 
       try {
           const historyForApi = newHistory.filter(m => m.role !== 'model' || !m.content.includes('Error'));
-          const response = await chatWithPatristicAI(historyForApi, userMessage);
+          const response = await chatWithPatristicAI(historyForApi, userMessage, depth);
           
           const updatedHistory = [...newHistory, { role: 'model' as const, content: response }];
           setPatristicMessages(updatedHistory);
@@ -536,6 +536,7 @@ function App() {
                   onNewChat={handlePatristicNewChat}
                   onLoadChat={handlePatristicLoadChat}
                   onDeleteChat={handlePatristicDeleteChat}
+                  user={user}
               />
           );
       }
