@@ -850,3 +850,287 @@ export async function getManuscriptImage(bookName: string, chapter: number): Pro
         };
     }
 }
+
+// === ALL NEW FUNCTIONS ACCORDING TO USER'S SPECIFICATIONS ===
+
+export interface AnnualCurriculumMonth {
+    monthName: string;
+    season: string;
+    theme: string;
+    lessons: {
+        week: number;
+        title: string;
+        scripture: string;
+        summary: string;
+        activityIdea: string;
+    }[];
+}
+
+export async function generateCraftActivities(
+    lessonTitle: string,
+    spiritualObjective: string,
+    ageGroup: AgeGroup
+): Promise<string> {
+    const prompt = `
+    Role: Creative Sunday School Art and Craft Specialist for Coptic Orthodox Church Sunday Schools.
+    Task: Design 2 creative, lovely, highly engaging, low-cost and interactive craft/manual activities (أنشطة يدوية وأعمال فنية) for the children.
+    
+    Lesson Details:
+    - Title: "${lessonTitle}"
+    - Spiritual Objective: "${spiritualObjective}"
+    - Age Group (المرحلة العمرية): "${ageGroup}"
+    
+    Format of the output:
+    Write a beautifully formatted Markdown response in Arabic.
+    For each of the 2 crafts, include:
+    1. **اسم النشاط (Craft Name)**: Creative title starting with scissors emoji (✂️).
+    2. **فكرة النشاط والهدف منه (Concept & Goal)**: How it connects to the lesson and spiritual meaning.
+    3. **الخامات المطلوبة (Materials needed)**: List low-cost, safe, accessible items (paper cups, cardboard, wooden sticks, paper plates, etc.).
+    4. **خطوات التحضير والتنفيذ خطوة بخطوة (Step-by-step instructions)**.
+    5. **رسالة روحية أثناء العمل (Spiritual message/Discussion during assembly)**: What the teacher can discuss with children as they work.
+    6. **أشكال وتحديثات بديلة (Alternative/Simple variants)**.
+    
+    Make the layout elegant, easy to read, with bold text and step-by-step numbers, specifically tailored for the "${ageGroup}" category.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", { 
+            contents: prompt,
+            config: { temperature: 0.85 }
+        });
+        return (response.text || "").trim();
+    } catch (e: any) {
+        throw new Error(e.message || "فشل في توليد الأنشطة اليدوية. يرجى المحاولة مرة أخرى.");
+    }
+}
+
+export async function generateWorksheetsAndColoring(
+    lessonTitle: string,
+    spiritualObjective: string,
+    ageGroup: AgeGroup
+): Promise<string> {
+    const prompt = `
+    Role: Sunday School Educational Specialist, Worksheet & Printable Designer.
+    Task: Design a complete printable worksheet layout and coloring page design (أوراق عمل، تلوين، وألغاز تفاعلية) for the lesson.
+    
+    Lesson Details:
+    - Title: "${lessonTitle}"
+    - Spiritual Objective: "${spiritualObjective}"
+    - Age Group (المرحلة العمرية): "${ageGroup}"
+    
+    Format of the output:
+    Write a beautifully formatted Markdown response in Arabic. Include:
+    1. **تصميم ورقة التلوين المقترحة (🎨 Coloring Page Design Concept)**: Detailed prompt/idea of the drawing (e.g. tracing outlines), and state the exact scripture Bible Verse (آية الدرس) printed in a gorgeous frame at the bottom for children to color and memorize.
+    2. **ورقة العمل الذهنية والتفاعلية (📃 Classroom Worksheet)** featuring:
+       - **لغز المتاهة أو التشفير (🧩 Maze / Word Decoder Puzzle)**: Complete description of a thematic puzzle with its solution.
+       - **كلمات متقاطعة مبسطة أو كلمة السر (🔍 Word Search / Crossword)**: Clues and answers related to the Sunday School lesson.
+       - **أسئلة ذكاء وفهم للقصة (❓ Sunday School Quiz)**: 3 engaging queries testing comprehension with spiritual insight, suitable for "${ageGroup}".
+       - **تحدي السلوك الروحي الأسبوعي (🏆 Weekly Spiritual Goal Box)**: A 7-day checklist (e.g., praying, doing a good deed) to encourage real-world practice.
+       
+    Keep the font style structured, neat, and highly readable, specifically optimized for Sunday School printables.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", { 
+            contents: prompt,
+            config: { temperature: 0.85 }
+        });
+        return (response.text || "").trim();
+    } catch (e: any) {
+        throw new Error(e.message || "فشل في توليد أوراق العمل والتلوين. يرجى المحاولة مرة أخرى.");
+    }
+}
+
+export async function generateAnnualCurriculum(
+    objective: string,
+    ageGroup: string,
+    notes: string
+): Promise<AnnualCurriculumMonth[]> {
+    try {
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                months: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            monthName: { type: Type.STRING },
+                            season: { type: Type.STRING },
+                            theme: { type: Type.STRING },
+                            lessons: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        week: { type: Type.INTEGER },
+                                        title: { type: Type.STRING },
+                                        scripture: { type: Type.STRING },
+                                        summary: { type: Type.STRING },
+                                        activityIdea: { type: Type.STRING }
+                                    },
+                                    required: ["week", "title", "scripture", "summary", "activityIdea"]
+                                }
+                            }
+                        },
+                        required: ["monthName", "season", "theme", "lessons"]
+                    }
+                }
+            },
+            required: ["months"]
+        };
+
+        const prompt = `
+        Role: Expert Sunday School Curriculum Coordinator for the Coptic Orthodox Church.
+        Task: Create a highly customized, beautiful ANNUAL Curriculum Plan & Distribution (مخطط وموزع المنهج السنوي) divided into 12 themes/months for Sunday School.
+        
+        Target Age Group: "${ageGroup}"
+        Spiritual/Thematic Objective: "${objective}"
+        Special Requests or Notes: "${notes}"
+        
+        Guidelines:
+        1. Distribute Sunday school lessons across 12 periods/months. Use traditional Coptic months or standard months aligned with liturgical seasons (e.g. Great Lent, Pentecost, Apostle's Fast, Kiahk/Nativity, etc.) if possible.
+        2. Format each month with 4 integrated lessons (week 1 to week 4) with Bible scriptures and short interactive activity ideas.
+        3. Make the language in elegant and descriptive Arabic.
+        
+        Output must strictly match the JSON Schema.
+        `;
+
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.8 }
+        });
+
+        const responseText = response.text;
+        const json = JSON.parse(responseText || "{}");
+        return json.months || [];
+
+    } catch (e: any) {
+        throw new Error(e.message || "فشل في إعداد وتوزيع المنهج السنوي. حاول مرة أخرى.");
+    }
+}
+
+// Semantic Theme Search Interface & Service
+export interface ThematicSearchResult {
+    reference: string;
+    versesText: string;
+    relevanceExplanation: string;
+    suggestedMemoryVerse: string;
+    lessonApplication: string;
+    biblicalExamples: string;
+}
+
+export async function searchThematicBible(theme: string): Promise<ThematicSearchResult[]> {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            results: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        reference: { type: Type.STRING, description: "Scripture reference in Arabic (e.g. مزمور ٣٤: ١)" },
+                        versesText: { type: Type.STRING, description: "The Arabic Bible verse text from Van Dyck translation" },
+                        relevanceExplanation: { type: Type.STRING, description: "Explanation in Arabic of why this scripture relates to the theme with spiritual depth" },
+                        suggestedMemoryVerse: { type: Type.STRING, description: "A simple, lovely memory verse for children selected from this passage" },
+                        lessonApplication: { type: Type.STRING, description: "Practical Sunday School application idea for children based on this selection" },
+                        biblicalExamples: { type: Type.STRING, description: "Detailed Arabic description of specific Biblical events, stories, and characters who practically lived and illustrated this goal. (قصص ومواقف عملية لشخصيات من الكتاب المقدس عاشت هذا المبدأ والهدف)" }
+                    },
+                    required: ["reference", "versesText", "relevanceExplanation", "suggestedMemoryVerse", "lessonApplication", "biblicalExamples"]
+                }
+            }
+        },
+        required: ["results"]
+    };
+
+    const prompt = `
+    Role: Biblical Orthodoxy Scholar and Creative Sunday School Advisor.
+    Task: Perform a deep Semantic Theme Search on the entire Holy Bible for the following Sunday School Lesson Theme / Topic / Goal.
+    
+    Theme / Goal: "${theme}"
+    
+    Extract the top 3 most relevant, rich, and inspiring Bible passages (Old Testament or New Testament) that perfectly serve this theme/goal with deep spiritual nuances.
+    
+    Important:
+    - Retrive the actual real verses text in standard Arabic Van Dyck translation.
+    - For each search result, extract and write down rich and inspiring Biblical stories, events, characters, or actionable examples showing how this target or theme was lived out by someone in the Holy Bible (e.g., how David prayed, Daniel in the lion's den, how Joseph forgave, etc.). This must be detailed and highly engaging for children under 'biblicalExamples'.
+    - Provide a profound explanation of the relevance, a custom-designed short memory verse for children, and a creative, interactive Sunday School application.
+    - Language must be elegant, encouraging, and clear Arabic.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.7 }
+        });
+
+        const json = JSON.parse(response.text || "{}");
+        return json.results || [];
+    } catch (e: any) {
+        throw new Error(e.message || "فشل البحث الموضوعي الذكي. يرجى المحاولة مرة أخرى.");
+    }
+}
+
+// Lesson Hook Generator Interface & Service
+export interface LessonHookResult {
+    type: 'story' | 'science' | 'question';
+    title: string;
+    description: string;
+    connectionToVerse: string;
+}
+
+export async function generateLessonHooks(
+    bookName: string,
+    chapter: number,
+    chapterText: string
+): Promise<LessonHookResult[]> {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            hooks: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        type: { type: Type.STRING, description: "Must be one of: 'story' (قصة تفاعلية), 'science' (تجربة علمية ملفتة أو وسيلة إيضاح عملية), 'question' (سؤال محير ومثير للتفكير)" },
+                        title: { type: Type.STRING, description: "Attractive Arabic Title with an appropriate emoji" },
+                        description: { type: Type.STRING, description: "Detailed guide on how the servant executes this hook to excite children" },
+                        connectionToVerse: { type: Type.STRING, description: "How this specific opening connects beautifully to a verse/theme in Chapter " + chapter }
+                    },
+                    required: ["type", "title", "description", "connectionToVerse"]
+                }
+            }
+        },
+        required: ["hooks"]
+    };
+
+    const prompt = `
+    Role: Master Sunday School Creative Hook Designer (متخصص فهارس ومقدمات تشويقية مشوقة للأطفال).
+    Task: Analyze the context of **${bookName} - Chapter ${chapter}** and create 3 innovative introductory hooks (أفكار تشويقية ومقدمات للدرس) suitable for kids.
+    
+    Context of Chapter ${chapter}:
+    """
+    ${chapterText}
+    """
+    
+    Generate exactly 3 hooks, one of each type:
+    1. 'story' (قصة تشويقية أو موقف درامي تفاعلي): A short dramatic intro scenario.
+    2. 'science' (تجربة علمية بسيطة أو وسيلة إيضاح عملية مجسمة): Using easily accessible safety objects to display a concrete spiritual truth.
+    3. 'question' (سؤال محير أو لغز ذهني): An intriguing question or a funny puzzle that redirects minds toward the chapter's deep focus.
+    
+    Language: Friendly, highly motivating Egyptian General Arabic or clear standard Arabic tailored for children.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.85 }
+        });
+
+        const json = JSON.parse(response.text || "{}");
+        return json.hooks || [];
+    } catch (e: any) {
+        throw new Error(e.message || "تعذر استخراج الأفكار التشويقية حالياً. حاول ثانية.");
+    }
+}
+

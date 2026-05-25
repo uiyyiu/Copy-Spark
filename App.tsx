@@ -8,7 +8,7 @@ import ResultsDisplay from './components/ResultsDisplay';
 import Modal from './components/Modal';
 import ChatInterface from './components/ChatInterface';
 import type { LessonPlan, Idea, IdeaSectionKey, AgeGroup, ChatMessage } from './types';
-import { generateLessonIdeas, generateAlternativeIdea, explainIdea, generateSuggestedQuestions, generateGameIdeas, chatWithPatristicAI, generateCurriculum, CurriculumLesson } from './services/geminiService';
+import { generateLessonIdeas, generateAlternativeIdea, explainIdea, generateSuggestedQuestions, generateGameIdeas, chatWithPatristicAI, generateCurriculum, CurriculumLesson, generateAnnualCurriculum, AnnualCurriculumMonth } from './services/geminiService';
 import { parseLessonExplanation } from './services/exportService';
 import Step1Basics from './components/Step1Basics';
 import Step2Details from './components/Step2Details';
@@ -17,6 +17,7 @@ import IntroScreen from './components/IntroScreen';
 import ToolsDashboard, { ToolId } from './components/ToolsDashboard';
 import GameBankForm from './components/GameBankForm';
 import CurriculumBuilderForm from './components/CurriculumBuilderForm';
+import AnnualCurriculumDisplay from './components/AnnualCurriculumDisplay';
 import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -50,6 +51,7 @@ function App() {
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
   const [gameResults, setGameResults] = useState<any[] | null>(null);
   const [curriculumResults, setCurriculumResults] = useState<CurriculumLesson[] | null>(null);
+  const [annualCurriculumResults, setAnnualCurriculumResults] = useState<AnnualCurriculumMonth[] | null>(null);
   
   // Chat State for Patristic Assistant
   const [patristicMessages, setPatristicMessages] = useState<ChatMessage[]>([]);
@@ -133,6 +135,7 @@ function App() {
     setLessonPlan(null);
     setGameResults(null);
     setCurriculumResults(null);
+    setAnnualCurriculumResults(null);
     setPatristicMessages([]);
     setCurrentChatId(null); // Reset active chat
     setError(null);
@@ -163,6 +166,9 @@ function App() {
       } else if (curriculumResults) {
           titleToSave = `خطة منهج: ${curriculumResults[0]?.linkToObjective || 'بدون عنوان'}`;
           contentToSave = { lessonBody: JSON.stringify(curriculumResults) }; // Wrap in expected structure
+      } else if (annualCurriculumResults) {
+          titleToSave = `منهج سنوي: ${annualCurriculumResults[0]?.theme || 'منهج سنوي كنسي'}`;
+          contentToSave = { lessonBody: JSON.stringify(annualCurriculumResults) };
       } else {
           return;
       }
@@ -240,13 +246,20 @@ function App() {
       }
   };
 
-  const handleCurriculumSubmit = async (objective: string, duration: number, ageGroup: AgeGroup, notes: string) => {
+   const handleCurriculumSubmit = async (objective: string, duration: number, ageGroup: AgeGroup, notes: string, planType: 'series' | 'annual') => {
       setIsLoading(true);
       setCurriculumResults(null);
+      setAnnualCurriculumResults(null);
       setError(null);
+      setFormData(prev => ({ ...prev, ageGroup, lessonTitle: objective }));
       try {
-          const results = await generateCurriculum(objective, duration, ageGroup, notes);
-          setCurriculumResults(results);
+          if (planType === 'annual') {
+              const results = await generateAnnualCurriculum(objective, ageGroup, notes);
+              setAnnualCurriculumResults(results);
+          } else {
+              const results = await generateCurriculum(objective, duration, ageGroup, notes);
+              setCurriculumResults(results);
+          }
       } catch (err: any) {
           setError(err.message || 'حدث خطأ في توليد المنهج');
       } finally {
@@ -402,6 +415,7 @@ function App() {
                         onExplain={handleExplainIdea}
                         onOpenExplanation={handleOpenExplanation}
                         onToggleChat={() => setIsChatOpen(prev => !prev)}
+                        ageGroup={formData.ageGroup}
                     />
                   </div>
               );
@@ -496,6 +510,16 @@ function App() {
                       </div>
                       <button onClick={() => setCurriculumResults(null)} className="w-full py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors">عودة</button>
                   </div>
+              );
+          }
+          if (annualCurriculumResults) {
+              return (
+                  <AnnualCurriculumDisplay 
+                      results={annualCurriculumResults} 
+                      onBack={() => setAnnualCurriculumResults(null)} 
+                      ageGroup={formData.ageGroup}
+                      objective={formData.lessonTitle}
+                  />
               );
           }
           return <CurriculumBuilderForm onSubmit={handleCurriculumSubmit} isLoading={isLoading} />;

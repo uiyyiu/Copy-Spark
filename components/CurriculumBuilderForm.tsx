@@ -5,13 +5,14 @@ import { TargetIcon, UsersIcon, NoteIcon, BookOpenIcon, LightBulbIcon, ClockIcon
 import SmartAutoComplete from './SmartAutoComplete';
 
 interface CurriculumBuilderFormProps {
-    onSubmit: (objective: string, duration: number, ageGroup: AgeGroup, notes: string) => void;
+    onSubmit: (objective: string, duration: number, ageGroup: AgeGroup, notes: string, planType: 'series' | 'annual') => void;
     isLoading: boolean;
 }
 
 const ageGroups: AgeGroup[] = ['ابتدائي', 'اعدادي', 'ثانوي', 'شباب', 'خريجين'];
 
 const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit, isLoading }) => {
+    const [planType, setPlanType] = useState<'series' | 'annual'>('series');
     const [objective, setObjective] = useState('');
     const [duration, setDuration] = useState(4);
     const [ageGroup, setAgeGroup] = useState<AgeGroup>('ابتدائي');
@@ -20,7 +21,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (objective.trim().length >= 5) {
-            onSubmit(objective, duration, ageGroup, notes);
+            onSubmit(objective, duration, ageGroup, notes, planType);
         }
     };
 
@@ -41,12 +42,46 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
 
             <div className="glass-card p-6 md:p-10 rounded-3xl shadow-2xl border border-purple-500/30 bg-gradient-to-b from-purple-900/20 to-[#0f172a]/60 backdrop-blur-md">
                 <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* Choose Plan Type (Series vs Annual) */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-purple-400 font-bold">💎</span>
+                            <label className="spark-h3 text-white">نوع منهج الخدمة المطلوب</label>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/5 p-1 rounded-2xl border border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => setPlanType('series')}
+                                className={`py-3 px-4 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${
+                                    planType === 'series' 
+                                        ? 'bg-purple-500 text-white shadow-lg' 
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <span className="text-sm">📅 سلسلة أسابيع مركّزة</span>
+                                <span className="text-[10px] opacity-80 font-medium font-sans">خطوات متتالية تخدم هدفاً محدداً (3-6 أسابيع)</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPlanType('annual')}
+                                className={`py-3 px-4 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${
+                                    planType === 'annual' 
+                                        ? 'bg-purple-500 text-white shadow-lg' 
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <span className="text-sm">🗓️ مخطط وموزّع العام السنوي</span>
+                                <span className="text-[10px] opacity-80 font-medium font-sans">توزيع منهجي لـ 12 شهراً متكاملاً لمدارس الأحد</span>
+                            </button>
+                        </div>
+                    </div>
                     
                     {/* Main Objective */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <TargetIcon className="w-5 h-5 text-purple-400" />
-                            <label htmlFor="objective" className="spark-h3 text-white">الهدف الرئيسي</label>
+                            <label htmlFor="objective" className="spark-h3 text-white">الهدف الرئيسي للمنهج</label>
                         </div>
                         <SmartAutoComplete
                             id="objective"
@@ -55,7 +90,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                             onChange={handleObjectiveChange}
                             isTextarea={true}
                             rows={3}
-                            placeholder="مثال: التدريب على حياة الشكر، فضيلة الاتضاع، تاريخ الكنيسة..."
+                            placeholder={planType === 'annual' ? "مثال: بناء الشخصية المسيحية القوية، غرس العقيدة والطقوس الكنسية، السلوك المسيحي الملتزم..." : "مثال: التدريب على حياة الشكر، فضيلة الاتضاع، تاريخ الكنيسة..."}
                             className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all resize-none"
                             required
                             minLength={5}
@@ -63,35 +98,45 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Duration */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <ClockIcon className="w-5 h-5 text-purple-400" />
-                                <label className="spark-h3 text-white">مدة السلسلة</label>
+                        {/* Duration or Info Box depending on selection */}
+                        {planType === 'series' ? (
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <ClockIcon className="w-5 h-5 text-purple-400" />
+                                    <label className="spark-h3 text-white">مدة السلسلة</label>
+                                </div>
+                                <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+                                    {[3, 4, 5, 6].map((num) => (
+                                        <button
+                                            key={num}
+                                            type="button"
+                                            onClick={() => setDuration(num)}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                duration === num 
+                                                    ? 'bg-purple-500 text-white shadow-lg' 
+                                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                        >
+                                            {num} أسابيع
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
-                                {[3, 4, 5, 6].map((num) => (
-                                    <button
-                                        key={num}
-                                        type="button"
-                                        onClick={() => setDuration(num)}
-                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                                            duration === num 
-                                                ? 'bg-purple-500 text-white shadow-lg' 
-                                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                        }`}
-                                    >
-                                        {num} أسابيع
-                                    </button>
-                                ))}
+                        ) : (
+                            <div className="bg-purple-500/10 border border-purple-500/20 p-3 sm:p-4 rounded-xl flex items-start gap-2.5">
+                                <span className="text-purple-400 text-lg">💡</span>
+                                <div className="text-right">
+                                    <span className="block text-xs font-bold text-white mb-1">الموزّع السنوي الذكي</span>
+                                    <p className="text-[11px] leading-relaxed text-purple-200">سيقوم الذكاء الاصطناعي ببناء نموذج وتخطيط المنهج السنوي الكامل (12 شهراً × 4 أسابيع) موزعاً بشكل يتكامل مع مواسم الكنيسة والنمو الروحي.</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Age Group */}
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <UsersIcon className="w-5 h-5 text-purple-400" />
-                                <label className="spark-h3 text-white">الفئة العمرية</label>
+                                <label className="spark-h3 text-white">الفئة العمرية المستهدفة</label>
                             </div>
                             <select
                                 value={ageGroup}
