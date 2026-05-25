@@ -4,6 +4,8 @@ import { ScrollIcon, SendIcon, SparklesIcon, AssistantIcon, HistoryIcon, PlusIco
 import { ChatMessage } from '../types';
 import { formatTextToHtml } from '../services/exportService';
 import { saveLessonToLibrary, signInWithGoogle } from '../services/supabase';
+import GuidedTour, { TourStep } from './GuidedTour';
+import { HelpCircle } from 'lucide-react';
 
 interface PatristicChatInterfaceProps {
     messages: ChatMessage[];
@@ -66,6 +68,34 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
     const [depth, setDepth] = useState<'father' | 'kids' | 'apologetics'>('father');
     const [isSaving, setIsSaving] = useState<string | null>(null);
     const [savedIcons, setSavedIcons] = useState<Record<number, boolean>>({});
+    const [isTourOpen, setIsTourOpen] = useState(false);
+
+    const tourSteps: TourStep[] = [
+        {
+            targetId: 'tour-patristic-sidebar-btn',
+            title: 'قائمة السجل الجانبية 📜',
+            description: 'من هنا يمكنك إخفاء أو إظهار السجل الجانبي للمحادثات، بالإضافة إلى بدء مناقشة عقائدية آبائية جديدة لحفظ تساؤلاتك السابقة بخصوص الطقوس والإيمان.',
+            position: 'bottom'
+        },
+        {
+            targetId: 'tour-patristic-topics',
+            title: 'مواضيع جاهزة وسريعة 💡',
+            description: 'إذا لم تكن متأكداً مما تسأل عنه، يمكنك بنقرة واحدة اختيار أي سؤال شائع بخصوص اللاهوت الدفاعي، طقوس الكنيسة القبطية الأرثوذكسية، والتفسيرات الآبائية!',
+            position: 'top'
+        },
+        {
+            targetId: 'tour-patristic-depth',
+            title: 'مستويات الرد الذكية الثلاثة ⚙️',
+            description: 'اختر "خازن الآباء" للحصول على مراجع دقيقة وعميقة للغاية، أو "التعليمي المبسط" لإيصال المفاهيم للأعمار الصغيرة، أو "مدافع الإيمان" لحل الشبهات لاهوتياً وفلسفياً بشكل كافٍ ووافٍ!',
+            position: 'top'
+        },
+        {
+            targetId: 'tour-patristic-input-container',
+            title: 'صندوق الأسئلة والبحث عبر التقليد الكنسي 🔮',
+            description: 'اكتب هنا أي سؤال لاهوتي أو عقائدي أو طقسي يدور في ذهنك (مثال: شرح آية، أصل صلاة ليتورجية، دحض شك عقائدي) واضغط إرسال لبدء الحوار الثري والبحثي فوراً!',
+            position: 'top'
+        }
+    ];
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -208,14 +238,24 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col relative h-full">
                 
-                {/* Mobile Toggle & Header */}
-                <div className="absolute top-4 right-4 z-10">
+                {/* Mobile Toggle, Tour & Header */}
+                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
                     <button 
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="p-2 rounded-lg bg-[#1e293b]/80 text-slate-300 hover:text-white border border-white/10 backdrop-blur-md transition-colors"
+                        id="tour-patristic-sidebar-btn"
+                        className="p-2 rounded-lg bg-[#1e293b]/80 text-slate-300 hover:text-white border border-white/10 backdrop-blur-md transition-colors cursor-pointer"
                         title={isSidebarOpen ? "إخفاء القائمة" : "إظهار القائمة"}
                     >
                         <SidebarIcon className="w-5 h-5" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsTourOpen(true)}
+                        className="bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 text-xs font-bold px-3 py-2 rounded-lg border border-sky-500/30 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer animate-pulse"
+                    >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>جولة تعليمية 🗺️</span>
                     </button>
                 </div>
 
@@ -261,7 +301,7 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                             </div>
                             
                             {/* Suggested Explorations */}
-                            <div className="w-full text-right mt-10">
+                            <div id="tour-patristic-topics" className="w-full text-right mt-10">
                                 <h3 className="text-lg font-bold text-white mb-4 border-r-2 border-sky-400 pr-3 flex items-center gap-2">
                                     <SparklesIcon className="w-5 h-5 text-sky-400 animate-pulse" />
                                     مواضيع لاهوتية معاصرة وأسئلة تفاعلية شائعة:
@@ -379,7 +419,7 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                 <div className="flex-shrink-0 pt-4 px-4 pb-4 bg-[#0f172a]/70 border-t border-white/5 backdrop-blur-3xl absolute bottom-0 left-0 right-0 z-10">
                     <div className="max-w-4xl mx-auto flex flex-col gap-3">
                         {/* Interactive depth mode layout selector */}
-                        <div className="flex flex-col gap-2">
+                        <div id="tour-patristic-depth" className="flex flex-col gap-2">
                             <div className="flex flex-wrap items-center justify-start gap-2 select-none text-right">
                                 <span className="text-[11px] font-bold text-slate-400 ml-2">مستوى الشرح والردود المطلوبة:</span>
                                 <button
@@ -437,7 +477,7 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                             </div>
                         </div>
 
-                        <div className="relative bg-[#1e293b]/60 border border-white/10 rounded-2xl shadow-2xl p-2 flex items-end gap-2 transition-all focus-within:border-sky-500/50 focus-within:bg-[#1e293b]/80 focus-within:shadow-[0_0_20px_rgba(14,165,233,0.1)]">
+                        <div id="tour-patristic-input-container" className="relative bg-[#1e293b]/60 border border-white/10 rounded-2xl shadow-2xl p-2 flex items-end gap-2 transition-all focus-within:border-sky-500/50 focus-within:bg-[#1e293b]/80 focus-within:shadow-[0_0_20px_rgba(14,165,233,0.1)]">
                             <textarea
                                 ref={inputRef}
                                 value={input}
@@ -462,6 +502,12 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                     </p>
                 </div>
             </div>
+            <GuidedTour 
+                isOpen={isTourOpen} 
+                onClose={() => setIsTourOpen(false)} 
+                steps={tourSteps} 
+                tourKey="patristic-research-tour"
+            />
         </div>
     );
 };

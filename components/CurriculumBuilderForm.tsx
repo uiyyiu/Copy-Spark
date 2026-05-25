@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import type { AgeGroup } from '../types';
 import { TargetIcon, UsersIcon, NoteIcon, BookOpenIcon, LightBulbIcon, ClockIcon } from './icons';
 import SmartAutoComplete from './SmartAutoComplete';
+import GuidedTour, { TourStep } from './GuidedTour';
+import { HelpCircle } from 'lucide-react';
 
 interface CurriculumBuilderFormProps {
     onSubmit: (objective: string, duration: number, ageGroup: AgeGroup, notes: string, planType: 'series' | 'annual') => void;
@@ -17,6 +19,40 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
     const [duration, setDuration] = useState(4);
     const [ageGroup, setAgeGroup] = useState<AgeGroup>('ابتدائي');
     const [notes, setNotes] = useState('');
+    const [isTourOpen, setIsTourOpen] = useState(false);
+
+    const tourSteps: TourStep[] = [
+        {
+            targetId: 'tour-curr-type',
+            title: 'نوع منهج الخدمة 📅',
+            description: 'اختر "سلسلة أسابيع مركزة" لتوليد سلسلة مترابطة لهدف روحي محدد (من 3 إلى 6 أسابيع)، أو اختر "مخطط العام السنوي" لتوليد خطة منهج سنوية كاملة وموزعة على 12 شهراً لمدارس الأحد في ثوانٍ معدودة!',
+            position: 'bottom'
+        },
+        {
+            targetId: 'tour-curr-obj',
+            title: 'الهدف الرئيسي للمنهج 🎯',
+            description: 'اكتب الهدف أو الفضيلة العامة التي ترغب في غرسها في السلسلة ككل (مثال: غرس الشخصية الأرثوذكسية القوية، أو الأسرار الكنسية، السامري الصالح، إلخ).',
+            position: 'bottom'
+        },
+        {
+            targetId: 'tour-curr-duration-container',
+            title: 'المدة الزمنية أو الموزع السنوي ⏱️',
+            description: 'عند اختيار سلسلة مركزة، حدد عدد الأسابيع المستهدفة للمخطط لتوزيع الدروس، أو تصفح معلومات التوزيع السنوي الذكي.',
+            position: 'top'
+        },
+        {
+            targetId: 'tour-curr-age',
+            title: 'المرحلة العمرية 👥',
+            description: 'حدد السن المستهدف لضمان اختيار عناوين، شواهد، وأنشطة مناسبة للفهم والاستيعاب الخاص بالفئة العمرية المحددة.',
+            position: 'top'
+        },
+        {
+            targetId: 'tour-curr-submit',
+            title: 'توليد المنهج 🚀',
+            description: 'اضغط هنا ليقوم مرمج سبارك بتحليل مدخلاتك وبناء منهج روحي مترابط بشكل متزن ويخاطب العقول والقلوب!',
+            position: 'top'
+        }
+    ];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,9 +66,18 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
     };
 
     return (
-        <div className="w-full max-w-3xl mx-auto animate-fade-in-up">
-            <div className="text-center mb-10">
-                <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-md font-serif">
+        <div className="w-full max-w-3xl mx-auto animate-fade-in-up relative">
+            <div className="text-center mb-10 relative">
+                <button
+                    type="button"
+                    onClick={() => setIsTourOpen(true)}
+                    className="absolute top-0 left-0 md:left-4 z-20 cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs font-bold px-3 py-1.5 rounded-full border border-purple-500/30 flex items-center gap-1.5 transition-all shadow-md active:scale-95 animate-pulse"
+                >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span>جولة تعليمية 🗺️</span>
+                </button>
+
+                <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-md font-serif pt-8 md:pt-0">
                     مخطط المنهج
                 </h2>
                 <p className="text-lg text-white/90 font-medium drop-shadow">
@@ -44,7 +89,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* Choose Plan Type (Series vs Annual) */}
-                    <div>
+                    <div id="tour-curr-type">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-purple-400 font-bold">💎</span>
                             <label className="spark-h3 text-white">نوع منهج الخدمة المطلوب</label>
@@ -78,7 +123,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                     </div>
                     
                     {/* Main Objective */}
-                    <div>
+                    <div id="tour-curr-obj">
                         <div className="flex items-center gap-2 mb-2">
                             <TargetIcon className="w-5 h-5 text-purple-400" />
                             <label htmlFor="objective" className="spark-h3 text-white">الهدف الرئيسي للمنهج</label>
@@ -100,7 +145,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Duration or Info Box depending on selection */}
                         {planType === 'series' ? (
-                            <div>
+                            <div id="tour-curr-duration-container">
                                 <div className="flex items-center gap-2 mb-2">
                                     <ClockIcon className="w-5 h-5 text-purple-400" />
                                     <label className="spark-h3 text-white">مدة السلسلة</label>
@@ -123,7 +168,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-purple-500/10 border border-purple-500/20 p-3 sm:p-4 rounded-xl flex items-start gap-2.5">
+                            <div id="tour-curr-duration-container" className="bg-purple-500/10 border border-purple-500/20 p-3 sm:p-4 rounded-xl flex items-start gap-2.5">
                                 <span className="text-purple-400 text-lg">💡</span>
                                 <div className="text-right">
                                     <span className="block text-xs font-bold text-white mb-1">الموزّع السنوي الذكي</span>
@@ -133,7 +178,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                         )}
 
                         {/* Age Group */}
-                        <div>
+                        <div id="tour-curr-age">
                             <div className="flex items-center gap-2 mb-2">
                                 <UsersIcon className="w-5 h-5 text-purple-400" />
                                 <label className="spark-h3 text-white">الفئة العمرية المستهدفة</label>
@@ -151,7 +196,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                     </div>
 
                     {/* Notes */}
-                    <div>
+                    <div id="tour-curr-notes">
                         <div className="flex items-center gap-2 mb-2">
                             <NoteIcon className="w-5 h-5 text-purple-400" />
                             <label className="spark-h3 text-white">ملاحظات إضافية (اختياري)</label>
@@ -167,6 +212,7 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
 
                     <button
                         type="submit"
+                        id="tour-curr-submit"
                         disabled={isLoading || objective.length < 5}
                         className="w-full text-white font-bold text-lg py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 transition-all shadow-lg hover:shadow-purple-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transform hover:scale-[1.01]"
                     >
@@ -174,6 +220,13 @@ const CurriculumBuilderForm: React.FC<CurriculumBuilderFormProps> = ({ onSubmit,
                     </button>
                 </form>
             </div>
+
+            <GuidedTour 
+                isOpen={isTourOpen} 
+                onClose={() => setIsTourOpen(false)} 
+                steps={tourSteps} 
+                tourKey="curriculum-builder-tour"
+            />
         </div>
     );
 };

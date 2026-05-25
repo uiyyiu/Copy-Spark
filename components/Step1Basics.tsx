@@ -1,9 +1,11 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { AgeGroup } from '../types';
 import { PencilIcon, TargetIcon } from './icons';
 import SmartAutoComplete from './SmartAutoComplete';
 import { ToolId } from './ToolsDashboard';
+import GuidedTour, { TourStep } from './GuidedTour';
+import { HelpCircle } from 'lucide-react';
 
 interface FormData {
   lessonTitle: string;
@@ -21,6 +23,28 @@ interface Step1BasicsProps {
 }
 
 const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext, toolId }) => {
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  const tourSteps: TourStep[] = [
+    {
+      targetId: 'tour-lesson-title-container',
+      title: 'عنوان الدرس الروحي 📝',
+      description: 'ادخل هنا عنوان الدرس المراد تحضيره لمدارس الأحد أو الاجتماع (مثال: السامري الصالح، معجزة خمس خبزات وسمكتين...). ستقوم الأداة بمطابقة واختيار باقي التفاصيل لخدمتك.',
+      position: 'bottom'
+    },
+    {
+      targetId: 'tour-lesson-objective-container',
+      title: 'الهدف الروحي العميق 🎯',
+      description: 'اكتب بالتفصيل الفضيلة أو الرسالة التي يخرج بها المخدوم (مثال: أن يتعلم المخدوم مساعدة الضعيف بدون تمييز). يجب ألا يقل عن 20 حرفاً لضمان ترشيح أفكار ووسائل إيضاح دقيقة ومخصصة.',
+      position: 'bottom'
+    },
+    {
+      targetId: 'tour-submit-btn',
+      title: 'ابدأ التحضير والانتقال 🚀',
+      description: 'بعد ملء البيانات، سيفتح هذا الزر الصفحة التالية لتحديد السن والشواهد ورفع الصور، ثم خطة الدرس الكاملة بلمسة واحدة!',
+      position: 'top'
+    }
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -40,11 +64,20 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
   const titles = getTitles();
 
   return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in-up">
+    <div className="w-full max-w-3xl mx-auto animate-fade-in-up relative">
       
       {/* Title Section - Styled for Hero */}
-      <div className="text-center mb-10">
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-md" style={{fontFamily: 'Noto Naskh Arabic, serif'}}>
+      <div className="text-center mb-10 relative">
+        <button
+          type="button"
+          onClick={() => setIsTourOpen(true)}
+          className="absolute top-0 left-0 md:left-4 z-20 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>جولة تعليمية 🗺️</span>
+        </button>
+
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-md pt-8 md:pt-0" style={{fontFamily: 'Noto Naskh Arabic, serif'}}>
             {titles.main} <span className="text-[var(--accent-gold)]">بلمسة إبداع</span>
         </h2>
         <p className="text-lg text-white/90 font-medium drop-shadow">
@@ -57,7 +90,7 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
           <form onSubmit={(e) => { e.preventDefault(); if(!isNextDisabled) onNext(); }} className="space-y-6">
             
             {/* Lesson Title */}
-            <div>
+            <div id="tour-lesson-title-container">
                 <div className="flex items-center gap-2 mb-2">
                     <PencilIcon className="w-5 h-5 text-[var(--text-light-primary)] dark:text-white" />
                     <label htmlFor="lessonTitle" className="spark-h3 text-[var(--text-light-primary)] dark:text-white" style={{margin: 0}}>
@@ -77,7 +110,7 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
             </div>
 
             {/* Spiritual Objective */}
-            <div>
+            <div id="tour-lesson-objective-container">
                  <div className="flex items-center gap-2 mb-2">
                     <TargetIcon className="w-5 h-5 text-[var(--text-light-primary)] dark:text-white" />
                     <label htmlFor="spiritualObjective" className="spark-h3 text-[var(--text-light-primary)] dark:text-white" style={{margin: 0}}>
@@ -102,6 +135,7 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
             <div className="pt-2">
                 <button
                     type="submit"
+                    id="tour-submit-btn"
                     disabled={isNextDisabled}
                     className="w-full text-white font-bold text-lg py-4 px-6 rounded-xl hover:bg-[var(--accent-gold-hover)] transition-all duration-300 transform hover:scale-[1.02] shadow-lg disabled:bg-gray-400 disabled:dark:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
                     style={{
@@ -119,6 +153,13 @@ const Step1Basics: React.FC<Step1BasicsProps> = ({ formData, setFormData, onNext
       <div className="mt-4 text-center text-white/60 text-sm font-medium">
           <span>خطوة 1 من 2</span>
       </div>
+
+      <GuidedTour 
+        isOpen={isTourOpen} 
+        onClose={() => setIsTourOpen(false)} 
+        steps={tourSteps} 
+        tourKey="lesson-builder-basics"
+      />
     </div>
   );
 };

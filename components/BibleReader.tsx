@@ -5,6 +5,8 @@ import { getBibleChapterText, getLinguisticAnalysis, getChapterInterpretation, g
 import { formatTextToHtml } from '../services/exportService';
 import { BookOpenIcon, ChevronDownIcon, ChevronUpIcon, SpinnerIcon, RefreshIcon, LanguageIcon, XMarkIcon, InterpretationIcon, CopyIcon, CheckCircleIcon, ChildFaceIcon, BookmarkIcon, MaximizeIcon, MinimizeIcon, TextIncreaseIcon, TextDecreaseIcon, TypefaceIcon, InfoIcon, SparklesIcon, LightBulbIcon } from './icons';
 import { saveLessonToLibrary, signInWithGoogle } from '../services/supabase';
+import GuidedTour, { TourStep } from './GuidedTour';
+import { HelpCircle } from 'lucide-react';
 
 interface BibleReaderProps {
     isLoading?: boolean;
@@ -16,6 +18,28 @@ type FontType = 'naskh' | 'sans';
 
 const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
     const [view, setView] = useState<ViewState>('testament-select');
+    const [isTourOpen, setIsTourOpen] = useState(false);
+
+    const tourSteps: TourStep[] = [
+        {
+            targetId: 'tour-bible-trigger-btn',
+            title: 'مرحباً بك في قارئ الكتاب المقدس 📖',
+            description: 'هذا الركن يمنحك تجربة تفاعلية وبحثية قوية للغاية لدراسة وتحليل كلمة الله لمساعدتك في تحضير الدروس أو للتأمل الذاتي والمقارنة اللغوية.',
+            position: 'bottom'
+        },
+        {
+            targetId: 'tour-bible-thematic-search-card',
+            title: 'الباحث الموضوعي الذكي بالذكاء الاصطناعي 🔮',
+            description: 'اكتب هنا موضوع درسك أو القضية التي تبحث عن آيات وتطبيقات تخصها (مثال: مواجهة القلق، فضيلة الاتضاع، صلاة يسوع). سيقوم الذكاء الاصطناعي بمسح الأسفار وتوليد خطة تطبيقية كاملة وموثقة مذهلة!',
+            position: 'bottom'
+        },
+        {
+            targetId: 'tour-bible-testament-cards',
+            title: 'تصفح وقراءة الأسفار التقليدي 📜',
+            description: 'اختر العهد القديم أو العهد الجديد لتصفح الأسفار وقراءة الأصحاحات مباشرة مع توفير تفسيرات لاهوتية، مقارنات للكلمات العبرية واليونانية الأصلية وشروحات مبسطة للأطفال!',
+            position: 'top'
+        }
+    ];
     const [selectedTestament, setSelectedTestament] = useState<'old' | 'new' | null>(null);
     const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null);
     const [selectedChapter, setSelectedChapter] = useState<number>(1);
@@ -377,7 +401,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
         return (
             <div className="w-full max-w-4xl mx-auto space-y-10 mt-4 pb-20 animate-fade-in-up">
                 {/* 🔍 AI Semantic Theme Search Section */}
-                <div className="bg-gradient-to-b from-[#1e293b]/60 to-[#0f172a]/80 backdrop-blur-xl border border-white/15 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div id="tour-bible-thematic-search-card" className="bg-gradient-to-b from-[#1e293b]/60 to-[#0f172a]/80 backdrop-blur-xl border border-white/15 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -552,7 +576,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                 </div>
 
                 {/* Testament Chooser Cards */}
-                <div>
+                <div id="tour-bible-testament-cards">
                     <h4 className="text-center text-slate-400 text-sm mb-6 font-serif">أو تصفح الكتاب المقدس والأسفار بالطريقة التقليدية:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <button
@@ -962,9 +986,19 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
     return (
         <div className={`w-full ${isFocusMode ? '' : 'min-h-[80vh]'} flex flex-col`}>
              {!isFocusMode && (
-                <div className="flex items-center justify-center gap-3 mb-8">
+                <div className="flex items-center justify-center gap-3 mb-8 relative">
                     <BookOpenIcon className="w-8 h-8 text-amber-500" />
                     <h1 className="text-4xl font-bold text-white font-serif drop-shadow-lg">الكتاب المقدس</h1>
+                    
+                    <button
+                        type="button"
+                        id="tour-bible-trigger-btn"
+                        onClick={() => setIsTourOpen(true)}
+                        className="absolute left-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-500/30 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer animate-pulse"
+                    >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>جولة تعليمية 🗺️</span>
+                    </button>
                 </div>
              )}
 
@@ -1008,6 +1042,13 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
                     </div>
                 </div>
             )}
+            
+            <GuidedTour 
+                isOpen={isTourOpen} 
+                onClose={() => setIsTourOpen(false)} 
+                steps={tourSteps} 
+                tourKey="bible-reader-tour"
+            />
         </div>
     );
 };
