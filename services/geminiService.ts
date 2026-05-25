@@ -46,7 +46,7 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
 
         // Retryable Errors: 
         // 429 (Rate Limit) needs patience. 503 (Overloaded) needs patience.
-        const isRateLimit = status === 429;
+        const isRateLimit = status === 429 || message.toLowerCase().includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('exhausted') || message.toLowerCase().includes('rate limit');
         const isServerOverloaded = status === 503;
         const isInternalError = status >= 500;
         const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
@@ -64,7 +64,12 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
         
         // Final Friendly Error Messages
         if (isRateLimit) {
-            throw new Error("عفواً، الخدمة مزدحمة جداً (Rate Limit). يمكنك إضافة مفتاح API خاص بك في الإعدادات لتجنب هذا الانتظار.");
+            const userKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_gemini_key') : null;
+            if (userKey && userKey.length > 10) {
+                throw new Error("لقد تجاوزت حركة المرور المسموح بها لمفتاح API الشخصي الخاص بك (Rate Limit). يرجى المحاولة بعد دقيقة ليعود المفتاح للعمل.");
+            } else {
+                throw new Error("API_LIMIT_REACHED: عفواً، لقد نفذ حد الاستخدام للخدمة المجانية المدمجة اليوم بسبب الضغط العالي. يرجى إضافة مفتاح API خاص بك لتفادي الانتظار وتكملة العمل فوراً وبدون قيود.");
+            }
         }
         if (isServerOverloaded) {
             throw new Error("سيرفرات جوجل مشغولة حالياً (503). الخدمة تواجه ضغطاً عالياً.");

@@ -23,6 +23,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
 import SettingsModal from './components/SettingsModal';
+import ApiLimitModal from './components/ApiLimitModal';
 import { BookOpenIcon, TargetIcon } from './components/icons'; 
 
 const initialFormData = {
@@ -63,6 +64,7 @@ function App() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showApiLimitModal, setShowApiLimitModal] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
@@ -99,6 +101,15 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+  
+  // Monitor Rate limit or Quota error to open steps modal
+  useEffect(() => {
+    if (error && error.includes('API_LIMIT_REACHED')) {
+      const cleanMessage = error.replace('API_LIMIT_REACHED:', '').trim();
+      setError(cleanMessage);
+      setShowApiLimitModal(true);
+    }
+  }, [error]);
   
   // Load Patristic Chat History when tool is selected
   useEffect(() => {
@@ -543,8 +554,16 @@ function App() {
 
             <main className="flex-grow container mx-auto px-4 py-8 relative z-10">
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 text-center animate-fade-in">
-                        {error}
+                    <div className="bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-2xl mb-6 text-right animate-fade-in flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+                        <div className="flex-1">
+                            <p className="text-sm font-sans leading-relaxed">{error}</p>
+                        </div>
+                        <button 
+                            onClick={() => setShowApiLimitModal(true)} 
+                            className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10 shrink-0 font-sans"
+                        >
+                            <span>إضافة مفتاحك الشخصي بضغطة واحدة 🚀</span>
+                        </button>
                     </div>
                 )}
                 {renderContent()}
@@ -582,6 +601,14 @@ function App() {
             <SettingsModal
                 isOpen={showSettingsModal}
                 onClose={() => setShowSettingsModal(false)}
+            />
+
+            <ApiLimitModal
+                isOpen={showApiLimitModal}
+                onClose={() => setShowApiLimitModal(false)}
+                onKeySaved={() => {
+                  setError(null);
+                }}
             />
           </>
       )}
