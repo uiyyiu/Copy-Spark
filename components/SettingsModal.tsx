@@ -20,8 +20,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     }, [isOpen]);
 
     const handleSave = () => {
-        if (apiKey.trim()) {
-            localStorage.setItem('user_gemini_key', apiKey.trim());
+        const trimmed = apiKey.trim();
+        if (trimmed) {
+            // Support comma, semicolon, space or newline separated keys
+            const keys = trimmed
+                .split(/[,\s;\n]+/)
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+            
+            if (keys.length > 0) {
+                localStorage.setItem('user_gemini_key', keys.join(', '));
+            } else {
+                localStorage.removeItem('user_gemini_key');
+            }
         } else {
             localStorage.removeItem('user_gemini_key');
         }
@@ -52,27 +63,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <div className="p-3 rounded-full bg-slate-700/50 text-slate-200">
                         <CogIcon className="w-6 h-6" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white font-serif">الإعدادات</h2>
+                    <div>
+                        <h2 className="text-xl font-bold text-white font-serif">الإعدادات</h2>
+                        <span className="text-[10px] text-amber-400">تدوير المفاتيح تلقائياً مفعل 🔄</span>
+                    </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 text-right">
                     <div>
                         <label className="block text-sm font-bold text-slate-300 mb-2">
-                            مفتاح API الشخصي (اختياري)
+                            مفتاح أو مفاتيح API الشخصية (اختياري)
                         </label>
                         <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-                            إذا كنت تواجه مشكلة "الخدمة مشغولة" (Rate Limit) بشكل متكرر، يمكنك إضافة مفتاح Google Gemini API الخاص بك هنا.
+                            إذا كنت تواجه مشكلة "الخدمة مشغولة" (Rate Limit)، يمكنك إضافة مفتاح Google Gemini API أو <span className="text-amber-400 font-bold">عدة مفاتيح مفصولة بأسطر أو فواصل</span> هنا، وسيقوم التطبيق بالتبديل بينها تلقائياً عند انتهاء حد أحدها!
                             <br/>
                             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">
                                 احصل على مفتاح مجاني من هنا
                             </a>
                         </p>
-                        <input 
-                            type="password" 
+                        <textarea 
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="لصق مفتاح API هنا..."
-                            className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all font-mono text-sm"
+                            placeholder="الصق مفتاح API هنا...&#10;أو الصق عدة مفاتيح (كل مفتاح في سطر أو مفصولة بفواصل) لتفعيل التبديل التلقائي."
+                            rows={3}
+                            className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all font-mono text-xs text-left"
+                            dir="ltr"
                         />
                     </div>
 

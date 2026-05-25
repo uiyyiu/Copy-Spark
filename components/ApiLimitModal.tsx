@@ -35,13 +35,31 @@ const ApiLimitModal: React.FC<ApiLimitModalProps> = ({ isOpen, onClose, onKeySav
             return;
         }
 
-        // Broad validation for Gemini API keys (typically starts with AIzaSy)
-        if (!trimmedKey.startsWith('AIzaSy') || trimmedKey.length < 30) {
-            setValidationError('تنبيه: يبدو أن هذا المفتاح غير صالح. مفاتيح Gemini تبدأ بـ AIzaSy وعادةً ما تكون أطول من 30 حرفاً.');
+        // Split by comma, semicolon or newlines to support multiple keys
+        const keys = trimmedKey
+            .split(/[,\s;\n]+/)
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+
+        if (keys.length === 0) {
+            localStorage.removeItem('user_gemini_key');
+            setSaved(true);
+            setTimeout(() => {
+                setSaved(false);
+                if (onKeySaved) onKeySaved();
+                onClose();
+            }, 1000);
             return;
         }
 
-        localStorage.setItem('user_gemini_key', trimmedKey);
+        // Validate each key in the list
+        const invalidKeys = keys.filter(k => !k.startsWith('AIzaSy') || k.length < 30);
+        if (invalidKeys.length > 0) {
+            setValidationError('تنبيه: يبدو أن بعض المفاتيح غير صالحة. مفاتيح Gemini تبدأ بـ AIzaSy وتتكون من 30 حرفاً أو أكثر. يرجى مراجعتها.');
+            return;
+        }
+
+        localStorage.setItem('user_gemini_key', keys.join(', '));
         setSaved(true);
         setValidationError(null);
         
@@ -124,9 +142,9 @@ const ApiLimitModal: React.FC<ApiLimitModalProps> = ({ isOpen, onClose, onKeySav
                     <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
                         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold grow-0 shrink-0">٣</span>
                         <div className="space-y-1">
-                            <p className="text-sm font-bold text-slate-200">الصق المِفْتاح وفَعِّله</p>
+                            <p className="text-sm font-bold text-slate-200">تدوير تلقائي للمفاتيح (اختياري)</p>
                             <p className="text-xs text-slate-400 leading-relaxed">
-                                قم بلصق المفتاح في الحقل أدناه مباشرة، واضغط على تفعيل المفتاح للبدء في توليد الدروس الفاخرة والألعاب بدون انقطاع.
+                                يمكنك إدخال <strong className="text-amber-400">مفتاح واحد أو عدة مفاتيح</strong> مفصولة بفاصلة أو سطر جديد. سيقوم التطبيق بالتبديل بينها تلقائياً وبشكل فوري فور نفاد حد أي مفتاح!
                             </p>
                         </div>
                     </div>
@@ -135,18 +153,21 @@ const ApiLimitModal: React.FC<ApiLimitModalProps> = ({ isOpen, onClose, onKeySav
                 {/* API Key Input and Form */}
                 <div className="space-y-4 pt-4 border-t border-white/5">
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">
-                            مفتاح API الخاص بك:
-                        </label>
-                        <input 
-                            type="password" 
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-sm font-bold text-slate-300">
+                                مفتاح أو مفاتيح API الخاصة بك:
+                            </label>
+                            <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 font-sans">يدعم التدوير التلقائي 🔄</span>
+                        </div>
+                        <textarea 
                             value={apiKey}
                             onChange={(e) => {
                                 setApiKey(e.target.value);
                                 setValidationError(null);
                             }}
-                            placeholder="الصق مفتاح API هنا (يبدأ بـ AIzaSy)..."
-                            className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white placeholder-slate-600 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-mono text-sm tracking-wide text-left"
+                            rows={3}
+                            placeholder="الصق مفتاح API هنا...&#10;إذا كنت تملك عدة مفاتيح، افصل بينها بفاصلة أو سطر جديد ليدورها التطبيق تلقائياً عند انتهاء حد أي منها."
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white placeholder-slate-600 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-mono text-xs tracking-wide text-left"
                             dir="ltr"
                         />
                     </div>

@@ -2,73 +2,106 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
 
+// Keep track of the active user key index
+let activeUserKeyIndex = 0;
+
+// Helper to get all stored user keys
+export const getUserKeys = (): string[] => {
+    if (typeof localStorage === 'undefined') return [];
+    const stored = localStorage.getItem('user_gemini_key') || '';
+    return stored
+        .split(/[,\s;\n]+/)
+        .map(k => k.trim())
+        .filter(k => k.length > 10 && k.startsWith('AIzaSy'));
+};
+
 // Helper to get the AI client dynamically.
-// This allows switching between the system key and the user's custom key.
-const getGenAI = (): GoogleGenAI | null => {
-    const userKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_gemini_key') : null;
-    const keyToUse = userKey && userKey.length > 10 ? userKey : process.env.API_KEY;
+// This allows switching between the system key and the user's custom key(s).
+const getGenAI = (): { client: GoogleGenAI | null, isUserKey: boolean, keysCount: number } => {
+    const keys = getUserKeys();
+    if (keys.length > 0) {
+        const index = activeUserKeyIndex % keys.length;
+        const keyToUse = keys[index];
+        return {
+            client: new GoogleGenAI({ apiKey: keyToUse }),
+            isUserKey: true,
+            keysCount: keys.length
+        };
+    }
     
-    if (!keyToUse) return null;
-    return new GoogleGenAI({ apiKey: keyToUse });
+    const keyToUse = process.env.API_KEY;
+    if (!keyToUse) {
+        return { client: null, isUserKey: false, keysCount: 0 };
+    }
+    return {
+        client: new GoogleGenAI({ apiKey: keyToUse }),
+        isUserKey: false,
+        keysCount: 0
+    };
 };
 
 // --- Retry Logic Helper ---
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// RESTORED: Robust logic. 
+// RESTORED & ENHANCED: Robust logic with auto-rotation.
 // Fast retries (1s) cause immediate fail on Rate Limits. 
-// We need to wait longer (2000ms) to let the quota reset.
-async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000): Promise<any> {
-    const ai = getGenAI();
-    if (!ai) {
+// We wait longer (2000ms) for standard quota resets, but can rotate keys instantly.
+async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000, keysTried = 0): Promise<any> {
+    const aiConfig = getGenAI();
+    if (!aiConfig.client) {
         throw new Error("مفتاح API غير موجود. يرجى إضافته في الإعدادات.");
     }
 
     try {
         const callParams = { model, ...params };
-        return await ai.models.generateContent(callParams);
+        return await aiConfig.client.models.generateContent(callParams);
     } catch (error: any) {
         const status = error.status || error.response?.status;
         const message = error.message || '';
 
-        // Permanent Errors (No Retry)
-        if (status === 400 && message.includes('API key')) {
-            // Check if it was a user key that failed
-            const isUserKey = typeof localStorage !== 'undefined' && localStorage.getItem('user_gemini_key');
-            if (isUserKey) {
-                 throw new Error("مفتاح API الشخصي الذي أدخلته غير صالح. يرجى التحقق منه في الإعدادات.");
-            }
-            throw new Error("مفتاح API غير صالح.");
-        }
-        if (status === 403) {
-            throw new Error("تم رفض الوصول (403). قد يكون المفتاح محظوراً أو الدولة غير مدعومة.");
-        }
-
-        // Retryable Errors: 
-        // 429 (Rate Limit) needs patience. 503 (Overloaded) needs patience.
         const isRateLimit = status === 429 || message.toLowerCase().includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('exhausted') || message.toLowerCase().includes('rate limit');
+        const isApiKeyError = (status === 400 && message.includes('API key')) || status === 403;
         const isServerOverloaded = status === 503;
         const isInternalError = status >= 500;
         const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
 
+        // Check if we can rotate the user's keys automatically
+        if (aiConfig.isUserKey && aiConfig.keysCount > 1 && keysTried < aiConfig.keysCount - 1) {
+            console.warn(`[API Rotation] Key index ${activeUserKeyIndex % aiConfig.keysCount} got error (${status || message}). Rotating to next key...`);
+            activeUserKeyIndex = (activeUserKeyIndex + 1) % aiConfig.keysCount;
+            // Immediate retry with the next key, indexing the keys tried
+            return generateWithRetry(model, params, retries, delay, keysTried + 1);
+        }
+
+        // Permanent Errors (No Retry)
+        if (isApiKeyError) {
+            if (aiConfig.isUserKey) {
+                 throw new Error("مفتاح API الشخصي الذي أدخلته غير صالح أو منتهي الصلاحية. يرجى التحقق منه في الإعدادات.");
+            }
+            throw new Error("مفتاح API غير صالح.");
+        }
+
+        // Retryable Errors with delay:
         if (retries > 0 && (isRateLimit || isServerOverloaded || isInternalError || isNetworkError)) {
-            // If Rate Limited, waiting 1s is not enough. We double the delay.
             const waitTime = (isRateLimit || isServerOverloaded) ? delay * 2 : delay;
             
             console.warn(`Gemini API Warning: ${status || 'Network'}. Retrying in ${waitTime}ms... (Attempts left: ${retries})`);
             await sleep(waitTime);
             
-            // Exponential backoff: Next retry will wait even longer
-            return generateWithRetry(model, params, retries - 1, waitTime);
+            // Exponential backoff
+            return generateWithRetry(model, params, retries - 1, waitTime, keysTried);
         }
         
         // Final Friendly Error Messages
         if (isRateLimit) {
-            const userKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_gemini_key') : null;
-            if (userKey && userKey.length > 10) {
-                throw new Error("لقد تجاوزت حركة المرور المسموح بها لمفتاح API الشخصي الخاص بك (Rate Limit). يرجى المحاولة بعد دقيقة ليعود المفتاح للعمل.");
+            if (aiConfig.isUserKey) {
+                if (aiConfig.keysCount > 1) {
+                    throw new Error("لقد نفذت حدود الاستخدام (Rate Limit) لجميع مفاتيح API المضافة. يرجى المحاولة بعد دقيقة حتى يعاد تعيين الحصص المتاحة.");
+                } else {
+                    throw new Error("لقد تجاوزت حركة المرور المسموح بها لمفتاح API الشخصي الخاص بك (Rate Limit). يرجى المحاولة بعد دقيقة، أو إضافة عدة مفاتيح مفصولة بفاصلة لتدويرها تلقائياً.");
+                }
             } else {
-                throw new Error("API_LIMIT_REACHED: عفواً، لقد نفذ حد الاستخدام للخدمة المجانية المدمجة اليوم بسبب الضغط العالي. يرجى إضافة مفتاح API خاص بك لتفادي الانتظار وتكملة العمل فوراً وبدون قيود.");
+                throw new Error("API_LIMIT_REACHED: عفواً، لقد نفذ حد الاستخدام للخدمة المجانية المدمجة اليوم بسبب الضغط العالي. يرجى إضافة مفتاح API خاص بك (يمكنك إضافة عدة مفاتيح مفصولة بفاصلة لتدويرها تلقائياً) لتفادي أي انقطاع ولتكملة العمل فوراً وبدون قيود.");
             }
         }
         if (isServerOverloaded) {
