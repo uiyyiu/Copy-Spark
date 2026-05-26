@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import { NoteIcon, StadiumIcon, ScrollIcon, BookOpenIcon, SunIcon, MoonIcon, SparklesIcon, TargetIcon } from './icons';
+import { NoteIcon, StadiumIcon, ScrollIcon, BookOpenIcon, SunIcon, MoonIcon, SparklesIcon, TargetIcon, LanguageIcon } from './icons';
 
-export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader' | 'curriculum-builder';
+export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader' | 'curriculum-builder' | 'theological-concordance';
 
 interface ToolsDashboardProps {
     onSelectTool: (tool: ToolId) => void;
@@ -107,6 +107,16 @@ const ToolsDashboard: React.FC<ToolsDashboardProps> = ({ onSelectTool, user }) =
             bgGradient: 'from-sky-500/20 to-sky-900/20',
             hoverBorder: 'hover:border-sky-500/50',
             image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop'
+        },
+        {
+            id: 'theological-concordance' as ToolId,
+            title: 'قاموس الجذور والترابط الاصطلاحي',
+            description: 'دراسة وتحليل مفاهيم اللاهوت: جذورها اللغوية الأصلية، والصدى الطقسي والآبائي.',
+            icon: LanguageIcon,
+            color: 'text-rose-400',
+            bgGradient: 'from-rose-500/20 to-rose-905/20',
+            hoverBorder: 'hover:border-rose-500/50',
+            image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
         }
     ];
 

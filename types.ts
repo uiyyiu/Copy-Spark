@@ -31,3 +31,39 @@ export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
 }
+
+export interface ConcordanceResult {
+  term: string;
+  originalRoot: {
+    word: string;
+    language: string;
+    transliteration: string;
+    phoneticPronunciation: string;
+    literalTranslation: string;
+  };
+  semanticWeb: {
+    oldTestamentSeptuagint: string;
+    newTestamentDevelopment: string;
+    theologicalEvolution: string;
+  };
+  patristicDogma: {
+    fatherName: string;
+    goldenQuote: string;
+    analyticalExplanation: string;
+  };
+  liturgicalEcho: {
+    liturgyMentions: string;
+    copticPraiseMentions: string;
+    spiritualReflection: string;
+  };
+  bentoCards: Array<{
+    title: string;
+    content: string;
+    iconType: string;
+  }>;
+  keyVerses: Array<{
+    reference: string;
+    verseText: string;
+    briefTheologicalNote: string;
+  }>;
+}

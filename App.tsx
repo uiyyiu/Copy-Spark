@@ -20,6 +20,7 @@ import CurriculumBuilderForm from './components/CurriculumBuilderForm';
 import AnnualCurriculumDisplay from './components/AnnualCurriculumDisplay';
 import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
+import { TheologicalConcordance } from './components/TheologicalConcordance';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
@@ -543,6 +544,16 @@ function App() {
 
       if (selectedTool === 'bible-reader') {
           return <BibleReader user={user} />;
+      }
+
+      if (selectedTool === 'theological-concordance') {
+          return (
+              <TheologicalConcordance 
+                  onBack={() => setSelectedTool(null)}
+                  user={user}
+                  onError={(err) => setError(err)}
+              />
+          );
       }
 
       return null;

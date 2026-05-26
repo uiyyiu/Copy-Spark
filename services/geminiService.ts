@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage } from '../types';
+import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage, ConcordanceResult } from '../types';
 
 // Keep track of the active user key index
 let activeUserKeyIndex = 0;
@@ -17,8 +17,8 @@ export const getUserKeys = (): string[] => {
 
 // Helper to get the AI client dynamically.
 // This allows switching between the system key and the user's custom key(s).
-const getGenAI = (): { client: GoogleGenAI | null, isUserKey: boolean, keysCount: number } => {
-    const keys = getUserKeys();
+const getGenAI = (useSystemKeyOnly = false): { client: GoogleGenAI | null, isUserKey: boolean, keysCount: number } => {
+    const keys = useSystemKeyOnly ? [] : getUserKeys();
     if (keys.length > 0) {
         const index = activeUserKeyIndex % keys.length;
         const keyToUse = keys[index];
@@ -46,8 +46,8 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // RESTORED & ENHANCED: Robust logic with auto-rotation.
 // Fast retries (1s) cause immediate fail on Rate Limits. 
 // We wait longer (2000ms) for standard quota resets, but can rotate keys instantly.
-async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000, keysTried = 0): Promise<any> {
-    const aiConfig = getGenAI();
+async function generateWithRetry(model: string, params: any, retries = 3, delay = 2000, keysTried = 0, useSystemKeyOnly = false): Promise<any> {
+    const aiConfig = getGenAI(useSystemKeyOnly);
     if (!aiConfig.client) {
         throw new Error("مفتاح API غير موجود. يرجى إضافته في الإعدادات.");
     }
@@ -60,7 +60,13 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
         const message = error.message || '';
 
         const isRateLimit = status === 429 || message.toLowerCase().includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('exhausted') || message.toLowerCase().includes('rate limit');
-        const isApiKeyError = (status === 400 && message.includes('API key')) || status === 403;
+        const isApiKeyError = 
+            status === 403 || 
+            (status === 400 && message.toLowerCase().includes('api key')) || 
+            message.toLowerCase().includes('api key not valid') ||
+            message.toLowerCase().includes('api_key_invalid') ||
+            message.toLowerCase().includes('key not valid') ||
+            message.toLowerCase().includes('api key is invalid');
         const isServerOverloaded = status === 503;
         const isInternalError = status >= 500;
         const isNetworkError = message.includes('fetch failed') || message.includes('network') || message.includes('Load failed');
@@ -70,12 +76,18 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
             console.warn(`[API Rotation] Key index ${activeUserKeyIndex % aiConfig.keysCount} got error (${status || message}). Rotating to next key...`);
             activeUserKeyIndex = (activeUserKeyIndex + 1) % aiConfig.keysCount;
             // Immediate retry with the next key, indexing the keys tried
-            return generateWithRetry(model, params, retries, delay, keysTried + 1);
+            return generateWithRetry(model, params, retries, delay, keysTried + 1, useSystemKeyOnly);
         }
 
         // Permanent Errors (No Retry)
         if (isApiKeyError) {
             if (aiConfig.isUserKey) {
+                 // Try falling back to system key if available
+                 const systemConfig = getGenAI(true);
+                 if (systemConfig.client) {
+                     console.warn("[API Fallback] User key is invalid or expired. Falling back to system key...");
+                     return generateWithRetry(model, params, retries, delay, keysTried, true);
+                 }
                  throw new Error("مفتاح API الشخصي الذي أدخلته غير صالح أو منتهي الصلاحية. يرجى التحقق منه في الإعدادات.");
             }
             throw new Error("مفتاح API غير صالح.");
@@ -89,7 +101,7 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
             await sleep(waitTime);
             
             // Exponential backoff
-            return generateWithRetry(model, params, retries - 1, waitTime, keysTried);
+            return generateWithRetry(model, params, retries - 1, waitTime, keysTried, useSystemKeyOnly);
         }
         
         // Final Friendly Error Messages
@@ -98,6 +110,12 @@ async function generateWithRetry(model: string, params: any, retries = 3, delay 
                 if (aiConfig.keysCount > 1) {
                     throw new Error("لقد نفذت حدود الاستخدام (Rate Limit) لجميع مفاتيح API المضافة. يرجى المحاولة بعد دقيقة حتى يعاد تعيين الحصص المتاحة.");
                 } else {
+                    // Try falling back to the system key on rate limits too as a final resort
+                    const systemConfig = getGenAI(true);
+                    if (systemConfig.client) {
+                        console.warn("[API Fallback] User key rate limited. Trying system key...");
+                        return generateWithRetry(model, params, retries, delay, keysTried, true);
+                    }
                     throw new Error("لقد تجاوزت حركة المرور المسموح بها لمفتاح API الشخصي الخاص بك (Rate Limit). يرجى المحاولة بعد دقيقة، أو إضافة عدة مفاتيح مفصولة بفاصلة لتدويرها تلقائياً.");
                 }
             } else {
@@ -1196,4 +1214,102 @@ export async function generateLessonHooks(
         throw new Error(e.message || "تعذر استخراج الأفكار التشويقية حالياً. حاول ثانية.");
     }
 }
+
+export async function generateTheologicalConcordance(term: string): Promise<ConcordanceResult> {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            term: { type: Type.STRING },
+            originalRoot: {
+                type: Type.OBJECT,
+                properties: {
+                    word: { type: Type.STRING, description: "الكلمة باللغة الأصلية اليونانية أو العبرية (e.g. ἀγάπη)" },
+                    language: { type: Type.STRING, description: "اللغة الأصلية (يونانية أو عبرية)" },
+                    transliteration: { type: Type.STRING, description: "النطق بالحروف اللاتينية (e.g. Agape)" },
+                    phoneticPronunciation: { type: Type.STRING, description: "النطق الصوتي التقريبي باللغة العربية (e.g. أغابي)" },
+                    literalTranslation: { type: Type.STRING, description: "الترجمة الحرفية الدقيقة والعميقة للمصطلح بالعربية" }
+                },
+                required: ["word", "language", "transliteration", "phoneticPronunciation", "literalTranslation"]
+            },
+            semanticWeb: {
+                type: Type.OBJECT,
+                properties: {
+                    oldTestamentSeptuagint: { type: Type.STRING, description: "كيف استُخدمت الكلمة وجذورها في العهد القديم والترجمة السبعينية وتطور المفهوم" },
+                    newTestamentDevelopment: { type: Type.STRING, description: "تطور واستخدام المصطلح في العهد الجديد وكيف شحنه الإنجيل بمعانٍ إلهية فائقة" },
+                    theologicalEvolution: { type: Type.STRING, description: "ملخص المسار اللاهوتي واللغوي للعبارة وتطورها التاريخي باختصار مبسط" }
+                },
+                required: ["oldTestamentSeptuagint", "newTestamentDevelopment", "theologicalEvolution"]
+            },
+            patristicDogma: {
+                type: Type.OBJECT,
+                properties: {
+                    fatherName: { type: Type.STRING, description: "اسم القديس/الأب المبادر بالتفسير والعقيدة اللاهوتية (e.g. القديس أثناسيوس الرسولي)" },
+                    goldenQuote: { type: Type.STRING, description: "مقولة آبائية ذهبية شهيرة متصلة مباشرة بهذا المصطلح" },
+                    analyticalExplanation: { type: Type.STRING, description: "شرح لاهوتي آبائي مبسط كيف ساهمت هذه اللفظة وصياغة الآباء لها في تأسيس العقيدة وتوضيح الإيمان الأرثوذكسي العريق" }
+                },
+                required: ["fatherName", "goldenQuote", "analyticalExplanation"]
+            },
+            liturgicalEcho: {
+                type: Type.OBJECT,
+                properties: {
+                    liturgyMentions: { type: Type.STRING, description: "أين تظهر هذه اللفظة أو مفهومها في صلوات القداس الإلهي (مثل القداس الباسيلي أو الغريغوري) وصياغتها الدقيقة" },
+                    copticPraiseMentions: { type: Type.STRING, description: "صلتها بالتسبحة والإبصالمودية السنوية أو الكيهكية والصلوات الطقسية الأخرى" },
+                    spiritualReflection: { type: Type.STRING, description: "تأمل روحي تطبيقي للخادم يعكس كيف يمكن ربط هذا العمق الليتورجي واللغوي بوجدان الأطفال/الشباب وعلاقتهم الفردية بالله اليوم" }
+                },
+                required: ["liturgyMentions", "copticPraiseMentions", "spiritualReflection"]
+            },
+            bentoCards: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING, description: "عنوان جذاب للبطاقة (Bento Card) يناسب محتواها القصير بأسلوب بليغ" },
+                        content: { type: Type.STRING, description: "محتوى البطاقة المكثف والمفيد جداً" },
+                        iconType: { type: Type.STRING, description: "أحد الرموز المناسبة للتصميم: root, semantic, patristic, liturgy, spiritual" }
+                    },
+                    required: ["title", "content", "iconType"]
+                }
+            },
+            keyVerses: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        reference: { type: Type.STRING, description: "شاهد الآية باللغة العربية بوضوح (e.g. يوحنا ١٥: ١٣)" },
+                        verseText: { type: Type.STRING, description: "نص الآية الكامل باللغة العربية (ترجمة فاندايك)" },
+                        briefTheologicalNote: { type: Type.STRING, description: "تعليق أو وقفة لاهوتية لغوية قصيرة تربط الآية بالطرح الاصطلاحي" }
+                    },
+                    required: ["reference", "verseText", "briefTheologicalNote"]
+                }
+            }
+        },
+        required: ["term", "originalRoot", "semanticWeb", "patristicDogma", "liturgicalEcho", "bentoCards", "keyVerses"]
+    };
+
+    const prompt = `
+    Role: Senior Biblical Orthodoxy Scholar & Original Languages Lexicographer.
+    Task: Conduct an incredibly deep, rich, and inspiring theological analysis of the target term. Translate its nuance, origins, historical shift, and modern liturgical beauty.
+
+    Target Term/Concept: "${term}"
+
+    Output EXACTLY a validated JSON matching the provided schema in elegant, high-standard, encouraging theological Arabic.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+                temperature: 0.75
+            }
+        });
+
+        const json = JSON.parse(response.text || "{}");
+        return json as ConcordanceResult;
+    } catch (e: any) {
+        throw new Error(e.message || "فشلت عملية تحليل المصطلح لاهوتياً ولغوياً. يرجى المحاولة مرة أخرى.");
+    }
+}
+
 
