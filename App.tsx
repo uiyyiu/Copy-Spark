@@ -21,6 +21,7 @@ import AnnualCurriculumDisplay from './components/AnnualCurriculumDisplay';
 import PatristicResearchForm from './components/PatristicResearchForm';
 import BibleReader from './components/BibleReader';
 import { TheologicalConcordance } from './components/TheologicalConcordance';
+import { ThematicTypologyDisplay } from './components/ThematicTypologyDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import InfoModal from './components/InfoModal';
 import SavedItemsModal from './components/SavedItemsModal';
@@ -549,6 +550,16 @@ function App() {
       if (selectedTool === 'theological-concordance') {
           return (
               <TheologicalConcordance 
+                  onBack={() => setSelectedTool(null)}
+                  user={user}
+                  onError={(err) => setError(err)}
+              />
+          );
+      }
+
+      if (selectedTool === 'thematic-typology') {
+          return (
+              <ThematicTypologyDisplay 
                   onBack={() => setSelectedTool(null)}
                   user={user}
                   onError={(err) => setError(err)}

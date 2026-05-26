@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage, ConcordanceResult } from '../types';
+import type { LessonPlan, Idea, IdeaSection, AgeGroup, ChatMessage, ConcordanceResult, TypologyResult } from '../types';
 
 // Keep track of the active user key index
 let activeUserKeyIndex = 0;
@@ -1311,5 +1311,205 @@ export async function generateTheologicalConcordance(term: string): Promise<Conc
         throw new Error(e.message || "فشلت عملية تحليل المصطلح لاهوتياً ولغوياً. يرجى المحاولة مرة أخرى.");
     }
 }
+
+export async function generateVerseTheologicalConcordance(verseText: string): Promise<ConcordanceResult> {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            term: { type: Type.STRING },
+            originalRoot: {
+                type: Type.OBJECT,
+                properties: {
+                    word: { type: Type.STRING, description: "الكلمة أو المفهوم المحوري بالآية باللغة الأصلية اليونانية أو العبرية (e.g. ἀγάπη)" },
+                    language: { type: Type.STRING, description: "اللغة الأصلية (يونانية أو عبرية)" },
+                    transliteration: { type: Type.STRING, description: "النطق بالحروف اللاتينية (e.g. Agape)" },
+                    phoneticPronunciation: { type: Type.STRING, description: "النطق الصوتي التقريبي باللغة العربية (e.g. أغابي)" },
+                    literalTranslation: { type: Type.STRING, description: "الترجمة الحرفية الدقيقة والعميقة للمصطلح المحوري بالعربية" }
+                },
+                required: ["word", "language", "transliteration", "phoneticPronunciation", "literalTranslation"]
+            },
+            semanticWeb: {
+                type: Type.OBJECT,
+                properties: {
+                    oldTestamentSeptuagint: { type: Type.STRING, description: "كيف تظهر جذور هذه الآية ومصطلحاتها في العهد القديم والترجمة السبعينية" },
+                    newTestamentDevelopment: { type: Type.STRING, description: "تحليل لاهوتي لنص الآية بأكملها وسياقها الروحي في العهد الجديد وتطور معانيها" },
+                    theologicalEvolution: { type: Type.STRING, description: "الرسالة اللاهوتية الجامعة التي تحملها الآية ومدى ارتباط كلماتها ببعضها البعض" }
+                },
+                required: ["oldTestamentSeptuagint", "newTestamentDevelopment", "theologicalEvolution"]
+            },
+            patristicDogma: {
+                type: Type.OBJECT,
+                properties: {
+                    fatherName: { type: Type.STRING, description: "اسم القديس/الأب الإسكندري أو الأنطاكي الذي فسر هذه الآية (e.g. القديس كيرلس الكبير)" },
+                    goldenQuote: { type: Type.STRING, description: "تفاسير آبائية بليغة أو مقولة آبائية ذهبية شهيرة تشرح هذه الآية تحديداً" },
+                    analyticalExplanation: { type: Type.STRING, description: "شرح لاهوتي وعقائدي أرثوذكسي عميق ومبسط ومباشر للآية مبني على تفسير هذا الأب وقوانين الإيمان الطاهرة" }
+                },
+                required: ["fatherName", "goldenQuote", "analyticalExplanation"]
+            },
+            liturgicalEcho: {
+                type: Type.OBJECT,
+                properties: {
+                    liturgyMentions: { type: Type.STRING, description: "أين تظهر هذه الآية أو صلوات مشابهة ومستندة إليها في القداس الإلهي الباسيلي/الغريغوري/الكيرلسي" },
+                    copticPraiseMentions: { type: Type.STRING, description: "استخدام الآية أو معانيها في التسبحة السنوية أو الكيهكية والذكصولوجيات الطقسية" },
+                    spiritualReflection: { type: Type.STRING, description: "تأمل روحي وجداني وتطبيق عملي يربط عمق هذه الآية بوجدان الخادم وحياته اليومية مع الأبناء" }
+                },
+                required: ["liturgyMentions", "copticPraiseMentions", "spiritualReflection"]
+            },
+            bentoCards: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING, description: "عنوان بليغ للبطاقة (Bento Card) يناسب محتواها القصير المشوق بأسلوب بليغ" },
+                        content: { type: Type.STRING, description: "محتوى البطاقة المكثف والمفيد جداً" },
+                        iconType: { type: Type.STRING, description: "أحد الرموز المناسبة للتصميم: root, semantic, patristic, liturgy, spiritual" }
+                    },
+                    required: ["title", "content", "iconType"]
+                }
+            },
+            keyVerses: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        reference: { type: Type.STRING, description: "نفس الشاهد أو شاهد آية لاهوتية موازية جداً للآية المدخلة" },
+                        verseText: { type: Type.STRING, description: "نص الآية الموازية أو الآية المدخلة كاملة باللغة العربية" },
+                        briefTheologicalNote: { type: Type.STRING, description: "تعليق أو وقفة لاهوتية لغوية مميزة ومثيرة تربط الآيتين" }
+                    },
+                    required: ["reference", "verseText", "briefTheologicalNote"]
+                }
+            }
+        },
+        required: ["term", "originalRoot", "semanticWeb", "patristicDogma", "liturgicalEcho", "bentoCards", "keyVerses"]
+    };
+
+    const prompt = `
+    Role: Master Orthodox Biblical Theologian & Patristics Scholar.
+    Task: Analyze the given entire Bible verse/passage in full depth. 
+    1. Identify the core/most pivotal theological word (or phrase) in this verse.
+    2. Analyze that word's Greek or Hebrew roots.
+    3. Analyze the overall theological meaning of the entire verse.
+    4. Link it to the Coptic Orthodox Patristic legacy (with quotes) and modern Liturgical echoes.
+
+    Target Verse: "${verseText}"
+
+    Output EXACTLY a validated JSON matching the provided schema in elegant, high-profile theological Arabic.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+                temperature: 0.75
+            }
+        });
+
+        const json = JSON.parse(response.text || "{}");
+        return json as ConcordanceResult;
+    } catch (e: any) {
+        throw new Error(e.message || "فشلت عملية تحليل الآية لاهوتياً ولغوياً. يرجى التأكد من النص والمحاولة مرة أخرى.");
+    }
+}
+
+export async function generateThematicTypology(symbolOrTheme: string): Promise<TypologyResult> {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            symbolName: { type: Type.STRING },
+            otContext: {
+                type: Type.OBJECT,
+                properties: {
+                    symbolTitle: { type: Type.STRING, description: "اسم الرمز أو الصورة بالعهد القديم بأسلوب بديع وجذاب جداً للأطفال والخدام" },
+                    passage: { type: Type.STRING, description: "الشاهد الكامل بالعهد القديم (e.g. تكوين ٢٢: ١-١٩)" },
+                    description: { type: Type.STRING, description: "وصف قصصي وسردي دقيق للحادثة التاريخية والرمز وكيف كان يعيشه شعب الله" },
+                    theologicalMeaning: { type: Type.STRING, description: "المعنى اللاهوتي والفكري الكامن وراء هذا الرمز في زمنه كتمهيد لشيء أعظم" }
+                },
+                required: ["symbolTitle", "passage", "description", "theologicalMeaning"]
+            },
+            ntFulfillment: {
+                type: Type.OBJECT,
+                properties: {
+                    realityTitle: { type: Type.STRING, description: "اسم الحقيقة والتحقيق بالعهد الجديد (مثال: ذبيحة المسيح الفدائية)" },
+                    passage: { type: Type.STRING, description: "الشاهد والآية بالعهد الجديد (e.g. يوحنا ٣: ١٦)" },
+                    verseText: { type: Type.STRING, description: "نص الآية الكاملة باللغة العربية (ترجمة فاندايك)" },
+                    theologicalLink: { type: Type.STRING, description: "الربط اللاهوتي الدقيق والشرح البديع لكيف يكمل هذا التحقيق ذاك الرمز والظل" }
+                },
+                required: ["realityTitle", "passage", "verseText", "theologicalLink"]
+            },
+            patristicInsight: {
+                type: Type.OBJECT,
+                properties: {
+                    fatherName: { type: Type.STRING, description: "اسم الأب المفسر (e.g. القديس يوحنا ذهبي الفم، القديس كيرلس الكبير)" },
+                    quote: { type: Type.STRING, description: "مقولة أو فقرة تفسيرية لاهوتية ذهبية من تراث الأب تربط بطريقة مذهلة الرمز بالمرموز إليه" },
+                    explanation: { type: Type.STRING, description: "شرح تفصيلي وتحليل لاهوتي آبائي أرثوذكسي عريق يوضح عمق كنيسة الإسكندرية والآباء في تفسير الرموز" }
+                },
+                required: ["fatherName", "quote", "explanation"]
+            },
+            spiritualApplication: {
+                type: Type.OBJECT,
+                properties: {
+                    classActivity: { type: Type.STRING, description: "نشاط تفاعلي أو فكرة عملية مبدعة لمدارس الأحد لثبيت الرمز والتحقيق في عقلية الأبناء (رسم، مسرحية، تمثيل صامت)" },
+                    servantTip: { type: Type.STRING, description: "نصائح تربوية ووسائل إيضاح للخادم لمساعدته في الشرح الواضح بدون هيبة من المصطلحات" },
+                    summaryMessage: { type: Type.STRING, description: "الرسالة الروحية وجوهر السر الموجه مباشرة لوجدان الطفل أو الشاب اليوم" }
+                },
+                required: ["classActivity", "servantTip", "summaryMessage"]
+            },
+            timelineSteps: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        stage: { type: Type.STRING, description: "اسم المرحلة بالترتيب (e.g. ١. الظل والحدث، ٢. النبؤة، ٣. تحقيق الجسد، ٤. الممارسة الليتورجية والأبدية)" },
+                        title: { type: Type.STRING, description: "عنوان فرعي معبر وجميل جداً للمرحلة" },
+                        details: { type: Type.STRING, description: "شرح مبسط ومكثف للمرحلة وعلاقتها بالحبكة الإلهية الكبرى لخلاصنا" }
+                    },
+                    required: ["stage", "title", "details"]
+                }
+            },
+            bentoInsights: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING, description: "عنوان البطاقة المكثف" },
+                        content: { type: Type.STRING, description: "المعلومة أو الشذرة اللاهوتية أو اللغوية الفريدة أو الطقسية السريعة" },
+                        category: { type: Type.STRING, description: "التصنيف (رمزية عقيدية، تفصيل لاهوتي، أثر طقسي، سر ليتورجي)" }
+                    },
+                    required: ["title", "content", "category"]
+                }
+            }
+        },
+        required: ["symbolName", "otContext", "ntFulfillment", "patristicInsight", "spiritualApplication", "timelineSteps", "bentoInsights"]
+    };
+
+    const prompt = `
+    Role: Senior Biblical Typologist (Orthodox Theological Framework).
+    Task: Build a brilliant, highly theological, yet incredibly engaging Typology or Prophecy map for Sunday School servants.
+    Anchor Theme/Symbol/Prophecy to trace: "${symbolOrTheme}"
+
+    Explain with absolute clarity how the Old Testament "Type/Shadow/Symbol" (الظل والرمز الموسوي) transitions beautifully to the New Testament "Antitype/Reality/Fulfillment" (الحقيقة والتحقيق الروحي) and is interpreted in Patristic Orthodoxy and Liturgy.
+
+    Output EXACTLY a validated JSON matching the provided schema in elegant, inspiring theological Arabic.
+    `;
+
+    try {
+        const response = await generateWithRetry("gemini-2.5-flash", {
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+                temperature: 0.75
+            }
+        });
+
+        const json = JSON.parse(response.text || "{}");
+        return json as TypologyResult;
+    } catch (e: any) {
+        throw new Error(e.message || "فشلت عملية إنشاء خريطة الظلال والرموز الموسوية. يرجى المحاولة مرة أخرى.");
+    }
+}
+
 
 

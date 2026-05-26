@@ -67,3 +67,40 @@ export interface ConcordanceResult {
     briefTheologicalNote: string;
   }>;
 }
+
+export interface TypologyResult {
+  symbolName: string;
+  otContext: {
+    symbolTitle: string;
+    passage: string;
+    description: string;
+    theologicalMeaning: string;
+  };
+  ntFulfillment: {
+    realityTitle: string;
+    passage: string;
+    verseText: string;
+    theologicalLink: string;
+  };
+  patristicInsight: {
+    fatherName: string;
+    quote: string;
+    explanation: string;
+  };
+  spiritualApplication: {
+    classActivity: string;
+    servantTip: string;
+    summaryMessage: string;
+  };
+  timelineSteps: Array<{
+    stage: string; // e.g. "١. الظل والرمز القديم", "٢. العبور الفطري", "٣. التحقيق والجسد المصلوب", "٤. الممارسة والسر"
+    title: string;
+    details: string;
+  }>;
+  bentoInsights: Array<{
+    title: string;
+    content: string;
+    category: string; // e.g., "رمزية عقيدية", "تفصيل لاهوتي", "أثر طقسي"
+  }>;
+}
+

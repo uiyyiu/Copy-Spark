@@ -15,7 +15,7 @@ import {
     ChevronDown,
     Map
 } from 'lucide-react';
-import { generateTheologicalConcordance } from '../services/geminiService';
+import { generateTheologicalConcordance, generateVerseTheologicalConcordance } from '../services/geminiService';
 import type { ConcordanceResult } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -36,8 +36,17 @@ const PRESET_TERMS = [
     { label: 'إيريني (السلام الإلهي)', term: 'السلام إيريني eirene' }
 ];
 
+const PRESET_VERSES = [
+    { label: 'يوحنا ٣: ١٦ (هكذا أحب الله...)', text: 'لأنه هكذا أحب الله العالم حتى بذل ابنه الوحيد لكي لا يهلك كل من يؤمن به بل تكون له الحياة الأبدية' },
+    { label: 'يوحنا ١: ١ (في البدء كان الكلمة)', text: 'في البدء كان الكلمة والكلمة كان عند الله وكان الكلمة الله' },
+    { label: '٢ كورنثوس ١٣: ١٤ (بركة الثالوث)', text: 'نعمة ربنا يسوع المسيح ومحبة الله وشركة الروح القدس مع جميعكم' },
+    { label: '١ تيموثاوس ٢: ٦ (يبذل فدية)', text: 'الذي بذل نفسه فدية لأجل الجميع الشهادة في وقتها الخاص' }
+];
+
 export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ onBack, user, onError }) => {
+    const [activeMode, setActiveMode] = useState<'term' | 'verse'>('term');
     const [searchTerm, setSearchTerm] = useState('');
+    const [verseTerm, setVerseTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<ConcordanceResult | null>(null);
     const [activeVerseIndex, setActiveVerseIndex] = useState<number>(0);
@@ -51,8 +60,26 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
         try {
             const data = await generateTheologicalConcordance(query);
             setResult(data);
+            setActiveVerseIndex(0);
         } catch (err: any) {
             onError(err.message || 'حدث خطأ أثناء الاتصال بمحرك البحث اللاهوتي.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerseSearch = async (verseToSearch: string) => {
+        const query = verseToSearch.trim();
+        if (!query) return;
+
+        setIsLoading(true);
+        setVerseTerm(query);
+        try {
+            const data = await generateVerseTheologicalConcordance(query);
+            setResult(data);
+            setActiveVerseIndex(0);
+        } catch (err: any) {
+            onError(err.message || 'حدث خطأ أثناء الاتصال بمحرك فك الجذور وترجمة الآيات.');
         } finally {
             setIsLoading(false);
         }
@@ -67,7 +94,7 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
                         <span className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
                             <Globe className="w-7 h-7" />
                         </span>
-                        قاموس الجذور والترابط الاصطلاحي
+                        قاموس الأصل اليوناني والعبري
                     </h2>
                     <p className="text-slate-300 mt-2 text-sm leading-relaxed max-w-xl">
                         بربط المصطلحات اللاهوتية بجذورها اللغوية الأصلية (اليونانية والعبرية) وتتبع استخدامها في السبعينية والعهد الجديد والأباء والليتورجيا الأرثوذكسية.
@@ -82,47 +109,117 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
                 </button>
             </div>
 
+            {/* Mode selection tabs */}
+            <div className="flex justify-center gap-3">
+                <button
+                    onClick={() => { setActiveMode('term'); setResult(null); }}
+                    className={`px-6 py-2.5 rounded-2xl font-serif text-sm font-bold transition-all border cursor-pointer ${
+                        activeMode === 'term' 
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/5' 
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/10 hover:bg-white/10'
+                    }`}
+                >
+                    البحث عن مصطلح لاهوتي
+                </button>
+                <button
+                    onClick={() => { setActiveMode('verse'); setResult(null); }}
+                    className={`px-6 py-2.5 rounded-2xl font-serif text-sm font-bold transition-all border cursor-pointer ${
+                        activeMode === 'verse' 
+                            ? 'bg-rose-500/15 text-rose-300 border-rose-500/50 shadow-md shadow-rose-500/5' 
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/10 hover:bg-white/10'
+                    }`}
+                >
+                    تفكيك وتفسير آية كاملة
+                </button>
+            </div>
+
             {/* Input & Presets Container */}
             <div className="glass-card p-6 md:p-8 rounded-3xl border border-amber-500/15 shadow-xl relative overflow-hidden bg-gradient-to-br from-amber-950/10 to-indigo-950/10">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[80px] pointer-events-none"></div>
 
                 <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="relative">
-                        <input 
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSearch(searchTerm);
-                            }}
-                            placeholder="ابحث عن مصطلح لاهوتي (مثال: نيافة، أغابي، لاهوت، فداء، نعمة، شركة...)"
-                            className="w-full pr-14 pl-24 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-amber-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all"
-                        />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-500">
-                            <Search className="w-6 h-6" />
+                    {activeMode === 'term' ? (
+                        <div className="relative">
+                            <input 
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSearch(searchTerm);
+                                }}
+                                placeholder="ابحث عن مصطلح لاهوتي (مثال: نيافة، أغابي، لاهوت، فداء، نعمة، شركة...)"
+                                className="w-full pr-14 pl-24 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-amber-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
+                                dir="rtl"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-500">
+                                <Search className="w-6 h-6" />
+                            </div>
+                            <button 
+                                disabled={isLoading}
+                                onClick={() => handleSearch(searchTerm)}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 text-sm cursor-pointer"
+                            >
+                                <span>بحث لغوي</span>
+                            </button>
                         </div>
-                        <button 
-                            disabled={isLoading}
-                            onClick={() => handleSearch(searchTerm)}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 text-sm"
-                        >
-                            <span>بحث لغوي</span>
-                        </button>
-                    </div>
+                    ) : (
+                        <div className="relative">
+                            <input 
+                                type="text"
+                                value={verseTerm}
+                                onChange={(e) => setVerseTerm(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleVerseSearch(verseTerm);
+                                }}
+                                placeholder="أدخل آية كاملة (مثال: محبة الله وشركة الروح القدس، أو شاهد مثل يوحنا ١٥...)"
+                                className="w-full pr-14 pl-38 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
+                                dir="rtl"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-rose-500">
+                                <BookOpen className="w-6 h-6" />
+                            </div>
+                            <button 
+                                disabled={isLoading}
+                                onClick={() => handleVerseSearch(verseTerm)}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-500/20 text-sm cursor-pointer"
+                            >
+                                <span>تفكيك وتفسير الآية</span>
+                            </button>
+                        </div>
+                    )}
 
                     <div className="space-y-3">
-                        <label className="text-slate-400 text-xs font-bold block">مفاهيم لاهوتية معتمدة للدراسة العميقة:</label>
-                        <div className="flex flex-wrap gap-2.5">
-                            {PRESET_TERMS.map((preset, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleSearch(preset.term)}
-                                    className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-white/5 bg-white/5 text-slate-300 hover:border-amber-500/40 hover:bg-amber-500/15 hover:text-amber-200 transition-all cursor-pointer"
-                                >
-                                    {preset.label}
-                                </button>
-                            ))}
-                        </div>
+                        {activeMode === 'term' ? (
+                            <>
+                                <label className="text-slate-400 text-xs font-bold block">مفاهيم لاهوتية معتمدة للدراسة العميقة:</label>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {PRESET_TERMS.map((preset, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleSearch(preset.term)}
+                                            className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-white/5 bg-white/5 text-slate-300 hover:border-amber-500/40 hover:bg-amber-500/15 hover:text-amber-200 transition-all cursor-pointer"
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <label className="text-slate-400 text-xs font-bold block">آيات وشواهد للدراسة والتفتيش لغوياً وعقيدياً:</label>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {PRESET_VERSES.map((preset, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleVerseSearch(preset.text)}
+                                            className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-white/5 bg-white/5 text-slate-300 hover:border-rose-500/40 hover:bg-rose-500/15 hover:text-rose-200 transition-all cursor-pointer"
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

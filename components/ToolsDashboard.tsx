@@ -1,8 +1,9 @@
 
 import React, { useMemo } from 'react';
+import { Compass } from 'lucide-react';
 import { NoteIcon, StadiumIcon, ScrollIcon, BookOpenIcon, SunIcon, MoonIcon, SparklesIcon, TargetIcon, LanguageIcon } from './icons';
 
-export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader' | 'curriculum-builder' | 'theological-concordance';
+export type ToolId = 'lesson-builder' | 'game-bank' | 'patristic-assistant' | 'bible-reader' | 'curriculum-builder' | 'theological-concordance' | 'thematic-typology';
 
 interface ToolsDashboardProps {
     onSelectTool: (tool: ToolId) => void;
@@ -110,13 +111,23 @@ const ToolsDashboard: React.FC<ToolsDashboardProps> = ({ onSelectTool, user }) =
         },
         {
             id: 'theological-concordance' as ToolId,
-            title: 'قاموس الجذور والترابط الاصطلاحي',
+            title: 'قاموس الأصل اليوناني والعبري',
             description: 'دراسة وتحليل مفاهيم اللاهوت: جذورها اللغوية الأصلية، والصدى الطقسي والآبائي.',
             icon: LanguageIcon,
             color: 'text-rose-400',
             bgGradient: 'from-rose-500/20 to-rose-905/20',
             hoverBorder: 'hover:border-rose-500/50',
             image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop'
+        },
+        {
+            id: 'thematic-typology' as ToolId,
+            title: 'رموز العهد القديم وربطها بالعهد الجديد',
+            description: 'دراسة استكشافية متخصصة تربط الرموز الكبرى (Typology) والنبؤات بالعهد القديم بتحقيقها بالعهد الجديد والقداس.',
+            icon: Compass,
+            color: 'text-emerald-400',
+            bgGradient: 'from-emerald-500/20 to-emerald-900/20',
+            hoverBorder: 'hover:border-emerald-500/50',
+            image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000&auto=format&fit=crop'
         }
     ];
 
