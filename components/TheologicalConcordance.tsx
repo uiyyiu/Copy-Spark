@@ -139,50 +139,56 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
 
                 <div className="max-w-3xl mx-auto space-y-6">
                     {activeMode === 'term' ? (
-                        <div className="relative">
-                            <input 
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSearch(searchTerm);
-                                }}
-                                placeholder="ابحث عن مصطلح لاهوتي (مثال: نيافة، أغابي، لاهوت، فداء، نعمة، شركة...)"
-                                className="w-full pr-14 pl-24 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-amber-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
-                                dir="rtl"
-                            />
-                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-500">
-                                <Search className="w-6 h-6" />
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSearch(searchTerm);
+                                    }}
+                                    placeholder="ابحث عن مصطلح لاهوتي (مثال: نيافة، أغابي، لاهوت، فداء، نعمة، شركة...)"
+                                    className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-amber-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
+                                    dir="rtl"
+                                />
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-500">
+                                    <Search className="w-6 h-6" />
+                                </div>
                             </div>
                             <button 
                                 disabled={isLoading}
                                 onClick={() => handleSearch(searchTerm)}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 text-sm cursor-pointer"
+                                className="px-8 py-4.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 text-base cursor-pointer shrink-0"
                             >
-                                <span>بحث لغوي</span>
+                                <Search className="w-5 h-5" />
+                                <span>البحث اللغوي</span>
                             </button>
                         </div>
                     ) : (
-                        <div className="relative">
-                            <input 
-                                type="text"
-                                value={verseTerm}
-                                onChange={(e) => setVerseTerm(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleVerseSearch(verseTerm);
-                                }}
-                                placeholder="أدخل آية كاملة (مثال: محبة الله وشركة الروح القدس، أو شاهد مثل يوحنا ١٥...)"
-                                className="w-full pr-14 pl-38 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
-                                dir="rtl"
-                            />
-                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-rose-500">
-                                <BookOpen className="w-6 h-6" />
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text"
+                                    value={verseTerm}
+                                    onChange={(e) => setVerseTerm(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleVerseSearch(verseTerm);
+                                    }}
+                                    placeholder="أدخل آية كاملة (مثال: محبة الله وشركة الروح القدس، أو شاهد مثل يوحنا ١٥...)"
+                                    className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
+                                    dir="rtl"
+                                />
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-rose-500">
+                                    <BookOpen className="w-6 h-6" />
+                                </div>
                             </div>
                             <button 
                                 disabled={isLoading}
                                 onClick={() => handleVerseSearch(verseTerm)}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-500/20 text-sm cursor-pointer"
+                                className="px-8 py-4.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-rose-500/20 text-base cursor-pointer shrink-0"
                             >
+                                <BookOpen className="w-5 h-5" />
                                 <span>تفكيك وتفسير الآية</span>
                             </button>
                         </div>

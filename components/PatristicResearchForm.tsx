@@ -236,34 +236,47 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col relative h-full">
+            <div className="flex-1 flex flex-col relative h-full overflow-hidden">
                 
-                {/* Mobile Toggle, Tour & Header */}
-                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                    <button 
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        id="tour-patristic-sidebar-btn"
-                        className="p-2 rounded-lg bg-[#1e293b]/80 text-slate-300 hover:text-white border border-white/10 backdrop-blur-md transition-colors cursor-pointer"
-                        title={isSidebarOpen ? "إخفاء القائمة" : "إظهار القائمة"}
-                    >
-                        <SidebarIcon className="w-5 h-5" />
-                    </button>
+                {/* Fixed Premium Top Chat Header */}
+                <div className="flex-shrink-0 flex items-center justify-between px-6 py-4.5 border-b border-white/10 bg-[#0f172a]/85 backdrop-blur-lg z-25">
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            id="tour-patristic-sidebar-btn"
+                            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-350 border border-white/10 shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                            title={isSidebarOpen ? "تفعيل نمط ملء الشاشة" : "إظهار سجل المحادثات"}
+                        >
+                            <SidebarIcon className="w-5 h-5" />
+                            <span className="hidden md:inline text-xs font-bold font-sans">
+                                {isSidebarOpen ? "ملء الشاشة ↔️" : "عرض السير وسجل البحث 📜"}
+                            </span>
+                        </button>
+                        <div className="border-r border-white/10 pr-3 mr-1">
+                            <h3 className="text-white font-bold font-serif text-sm sm:text-base">
+                                {depth === 'father' ? '☦️ المساعد الآبائي وتراث الإسكندرية كيرلس وأثناسيوس' : depth === 'kids' ? '👶 المعلم الروحي لمدارس الأحد ومفاهيم الإيمان' : '🛡️ منبر اللاهوت الدفاعي العقائدي'}
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                                {isSidebarOpen ? 'وضع العرض المزدوج نشط' : 'نمط ملء الشاشة الكامل مفعّل'}
+                            </p>
+                        </div>
+                    </div>
 
                     <button
                         type="button"
                         onClick={() => setIsTourOpen(true)}
-                        className="bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 text-xs font-bold px-3 py-2 rounded-lg border border-sky-500/30 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer animate-pulse"
+                        className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-sky-500/25 flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer font-sans"
                     >
-                        <HelpCircle className="w-3.5 h-3.5" />
-                        <span>جولة تعليمية 🗺️</span>
+                        <HelpCircle className="w-4 h-4 text-sky-400" />
+                        <span className="hidden sm:inline">جولة تفاعلية</span>
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto custom-scrollbar space-y-6 pb-32 px-4 pt-14 sm:pt-4">
+                <div className="flex-grow overflow-y-auto custom-scrollbar space-y-6 pb-44 px-4 pt-6">
                     {/* Welcome State */}
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-start h-full text-center opacity-90 mt-10 sm:mt-4 p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-                             <div className="relative mb-2">
+                        <div className="flex flex-col items-center justify-start h-full text-center opacity-90 mt-6 p-4 md:p-8 max-w-4xl mx-auto space-y-8">
+                             <div className="relative mb-1">
                                 <div className="absolute inset-0 bg-sky-500 blur-[40px] opacity-20 rounded-full animate-pulse"></div>
                                 <ScrollIcon className="w-16 h-16 text-sky-400 relative z-10" />
                             </div>
@@ -308,8 +321,8 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {SUGGESTED_TOPICS.map((topic, tIdx) => (
-                                        <div key={tIdx} className="bg-[#111827]/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-white/10 transition-all shadow-md">
-                                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
+                                        <div key={tIdx} className="bg-[#111827]/40 border border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-sky-500/20 transition-all shadow-md">
+                                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
                                                 <span className="text-xl">{topic.icon}</span>
                                                 <span className="font-bold text-slate-100 text-sm font-serif">{topic.title}</span>
                                             </div>
@@ -318,7 +331,7 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                                                     <button
                                                         key={qIdx}
                                                         onClick={() => handleQuickQuestionClick(q)}
-                                                        className="w-full text-right text-xs text-slate-300 hover:text-sky-300 bg-white/5 hover:bg-sky-500/5 border border-transparent hover:border-sky-500/20 rounded-xl p-2.5 transition-all leading-relaxed"
+                                                        className="w-full text-right text-[13px] text-slate-300 hover:text-sky-300 bg-white/5 hover:bg-sky-500/10 border border-white/5 hover:border-sky-500/35 rounded-xl py-3 px-3.5 transition-all leading-relaxed cursor-pointer hover:scale-[1.01]"
                                                     >
                                                         {q}
                                                     </button>

@@ -111,26 +111,29 @@ export const ThematicTypologyDisplay: React.FC<ThematicTypologyProps> = ({ onBac
                 <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 blur-[80px] pointer-events-none"></div>
 
                 <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="relative">
-                        <input 
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSearch(searchTerm);
-                            }}
-                            placeholder="اكتب رمزاً من العهد القديم (مثال: المن السماوي، صخرة حوريب، حية النحاس، عصا هارون...)"
-                            className="w-full pr-14 pl-40 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
-                            dir="rtl"
-                        />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-rose-500">
-                            <Compass className="w-6 h-6" />
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <input 
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSearch(searchTerm);
+                                }}
+                                placeholder="اكتب رمزاً من العهد القديم (مثال: المن السماوي، صخرة حوريب، حية النحاس، عصا هارون...)"
+                                className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
+                                dir="rtl"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-rose-500">
+                                <Compass className="w-6 h-6" />
+                            </div>
                         </div>
                         <button 
                             disabled={isLoading}
                             onClick={() => handleSearch(searchTerm)}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-500/20 text-sm cursor-pointer"
+                            className="px-8 py-4.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md shadow-rose-500/20 text-base cursor-pointer shrink-0"
                         >
+                            <Compass className="w-5 h-5" />
                             <span>تحليل الرابط والظلال</span>
                         </button>
                     </div>
