@@ -148,7 +148,7 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleSearch(searchTerm);
                                     }}
-                                    placeholder="ابحث عن مصطلح لاهوتي (مثال: نيافة، أغابي، لاهوت، فداء، نعمة، شركة...)"
+                                    placeholder="ابحث عن مصطلح لاهوتي (مثال: أغابي)"
                                     className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-amber-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
                                     dir="rtl"
                                 />
@@ -175,7 +175,7 @@ export const TheologicalConcordance: React.FC<TheologicalConcordanceProps> = ({ 
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleVerseSearch(verseTerm);
                                     }}
-                                    placeholder="أدخل آية كاملة (مثال: محبة الله وشركة الروح القدس، أو شاهد مثل يوحنا ١٥...)"
+                                    placeholder="أدخل آية أو شاهد (مثال: يوحنا ٣: ١٦)"
                                     className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
                                     dir="rtl"
                                 />

@@ -120,7 +120,7 @@ export const ThematicTypologyDisplay: React.FC<ThematicTypologyProps> = ({ onBac
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSearch(searchTerm);
                                 }}
-                                placeholder="اكتب رمزاً من العهد القديم (مثال: المن السماوي، صخرة حوريب، حية النحاس، عصا هارون...)"
+                                placeholder="اكتب رمزاً من العهد القديم (مثال: حية النحاس)"
                                 className="w-full pr-14 pl-4 py-4.5 bg-slate-900/60 border-2 border-white/10 focus:border-rose-500/50 focus:ring-0 rounded-2xl text-white text-lg placeholder:text-slate-500 font-sans tracking-wide transition-all text-right"
                                 dir="rtl"
                             />
