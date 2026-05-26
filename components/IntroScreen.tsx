@@ -348,10 +348,19 @@ const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter }) => {
 
         {activeModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setActiveModal(null)}>
-                <div className="glass-card w-full max-w-7xl p-8 relative border border-white/20 shadow-2xl rounded-3xl overflow-y-auto max-h-[90vh] bg-[#0f172a]/95" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"><XMarkIcon className="w-6 h-6" /></button>
-                    <h2 className="text-3xl font-bold text-white mb-8 font-serif border-b border-white/10 pb-4 text-center">{navItems.find(i => i.id === activeModal)?.label}</h2>
-                    {renderModalContent()}
+                <div className="glass-card w-full max-w-7xl relative border border-white/20 shadow-2xl rounded-3xl flex flex-col max-h-[90vh] overflow-hidden bg-[#0f172a]/95 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+                    {/* Fixed Header with clean non-overlapping elements */}
+                    <div className="flex items-center justify-between px-6 py-4 sm:px-8 sm:py-5 border-b border-white/10 shrink-0 bg-[#0f172a]/90 backdrop-blur-md z-10 w-full">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white font-serif">{navItems.find(i => i.id === activeModal)?.label}</h2>
+                        <button onClick={() => setActiveModal(null)} className="p-1.5 sm:p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-center" title="إغلاق">
+                            <XMarkIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                    
+                    {/* Independent Scrollable Content Area */}
+                    <div className="flex-grow overflow-y-auto p-6 sm:p-8 custom-scrollbar">
+                        {renderModalContent()}
+                    </div>
                 </div>
             </div>
         )}

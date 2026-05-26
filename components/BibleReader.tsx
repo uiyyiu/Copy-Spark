@@ -106,6 +106,19 @@ const BibleReader: React.FC<BibleReaderProps> = ({ user }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isFocusMode]);
 
+    // Lock body-scroll when any slide-up bottom sheet is open on mobile/desktop
+    useEffect(() => {
+        const isAnySheetOpen = showBookIntro || showSimpleExplanation || showInterpretation || showAnalysis || showHooks;
+        if (isAnySheetOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showBookIntro, showSimpleExplanation, showInterpretation, showAnalysis, showHooks]);
+
     const handleSaveContent = async (title: string, content: any) => {
         if (!user) {
             if (confirm("يجب عليك تسجيل الدخول لحفظ المحتوى. هل تريد تسجيل الدخول الآن؟")) {

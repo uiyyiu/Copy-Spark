@@ -114,6 +114,19 @@ function App() {
       setShowApiLimitModal(true);
     }
   }, [error]);
+
+  // Scroll lock when any full-screen or popup modal is open
+  useEffect(() => {
+    const isModalOpen = modalState.isOpen || showSavedModal || showSettingsModal || showApiLimitModal || !!activeInfoModal || isChatOpen;
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modalState.isOpen, showSavedModal, showSettingsModal, showApiLimitModal, activeInfoModal, isChatOpen]);
   
   // Load Patristic Chat History when tool is selected
   useEffect(() => {

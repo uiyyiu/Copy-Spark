@@ -55,7 +55,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div className="glass-card w-full max-w-md p-6 relative border border-white/20 shadow-2xl rounded-3xl bg-[#0f172a]/95" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                <button onClick={onClose} className="absolute top-6 left-6 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
                 
