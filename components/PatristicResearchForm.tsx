@@ -66,9 +66,17 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
     const [input, setInput] = useState('');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [depth, setDepth] = useState<'father' | 'kids' | 'apologetics'>('father');
+    const [isDepthOpen, setIsDepthOpen] = useState(false);
     const [isSaving, setIsSaving] = useState<string | null>(null);
     const [savedIcons, setSavedIcons] = useState<Record<number, boolean>>({});
     const [isTourOpen, setIsTourOpen] = useState(false);
+
+    // Auto-collapse sidebar on smaller screens on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            setIsSidebarOpen(false);
+        }
+    }, []);
 
     const tourSteps: TourStep[] = [
         {
@@ -181,19 +189,33 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
         <div className="w-full max-w-7xl mx-auto h-[calc(100vh-140px)] flex animate-fade-in overflow-hidden rounded-2xl border border-white/5 bg-[#0f172a]/40 backdrop-blur-md">
             
             {/* Sidebar (History) */}
-            <div className={`transition-all duration-300 border-l border-white/10 bg-[#0f172a]/60 flex flex-col ${isSidebarOpen ? 'w-80' : 'w-0 overflow-hidden'}`}>
+            <div className={`transition-all duration-300 border-l border-white/10 bg-[#0b1329] md:bg-[#0f172a]/60 flex flex-col 
+                ${isSidebarOpen ? 'w-[290px] max-w-full md:w-80 border-l' : 'w-0 overflow-hidden border-none'} 
+                absolute md:relative right-0 top-0 h-full z-30 md:z-10 shadow-2xl md:shadow-none
+            `}>
                 <div className="p-4 border-b border-white/10 flex items-center justify-between">
                     <h3 className="text-white font-bold font-serif flex items-center gap-2">
                         <HistoryIcon className="w-5 h-5 text-sky-400" />
                         السجل
                     </h3>
-                    <button 
-                        onClick={onNewChat}
-                        className="p-2 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-all active:scale-95"
-                        title="محادثة جديدة"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={onNewChat}
+                            className="p-2 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                            title="محادثة جديدة"
+                        >
+                            <PlusIcon className="w-5 h-5" />
+                        </button>
+                        <button 
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all active:scale-95 md:hidden cursor-pointer flex items-center justify-center"
+                            title="إغلاق السجل"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[18px] h-[18px]">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-2">
@@ -431,63 +453,82 @@ const PatristicResearchForm: React.FC<PatristicChatInterfaceProps> = ({
                 {/* Input and Controls Area */}
                 <div className="flex-shrink-0 pt-4 px-4 pb-4 bg-[#0f172a]/70 border-t border-white/5 backdrop-blur-3xl absolute bottom-0 left-0 right-0 z-10">
                     <div className="max-w-4xl mx-auto flex flex-col gap-3">
-                        {/* Interactive depth mode layout selector */}
-                        <div id="tour-patristic-depth" className="flex flex-col gap-2">
-                            <div className="flex flex-wrap items-center justify-start gap-2 select-none text-right">
-                                <span className="text-[11px] font-bold text-slate-400 ml-2">مستوى الشرح والردود المطلوبة:</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setDepth('father')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
-                                        depth === 'father'
-                                            ? 'bg-sky-500/15 text-sky-400 border-sky-500/40 shadow-[0_0_15px_rgba(14,165,233,0.15)] scale-[1.02]'
-                                            : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
-                                    }`}
-                                >
-                                    <span>☦️ خازن الآباء (عميق وموثق)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDepth('kids')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
-                                        depth === 'kids'
-                                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)] scale-[1.02]'
-                                            : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
-                                    }`}
-                                >
-                                    <span>👶 التعليمي (مبسط للأطفال)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDepth('apologetics')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
-                                        depth === 'apologetics'
-                                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)] scale-[1.02]'
-                                            : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
-                                    }`}
-                                >
-                                    <span>🛡️ مدافع الإيمان (دفاعي وعملي)</span>
-                                </button>
-                            </div>
+                        {/* Interactive depth mode layout selector with toggle */}
+                        <div id="tour-patristic-depth" className="flex flex-col gap-2 bg-[#1e293b]/30 p-2 sm:p-2.5 rounded-2xl border border-white/5 shadow-inner">
+                            <button
+                                type="button"
+                                onClick={() => setIsDepthOpen(!isDepthOpen)}
+                                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/40 border border-white/5 hover:bg-slate-800/40 text-right select-none transition-all active:scale-99 cursor-pointer"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-bold text-slate-400">⚙️ مستوى الشرح المطلوب:</span>
+                                    <span className="text-xs font-semibold text-sky-400 flex items-center gap-1">
+                                        {depth === 'father' ? '☦️ خازن الآباء (عميق وموثق)' : depth === 'kids' ? '👶 التعليمي (مبسط للأطفال)' : '🛡️ مدافع الإيمان (دفاعي وعملي)'}
+                                    </span>
+                                </div>
+                                <span className="text-[11px] text-sky-400 font-bold bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/15">
+                                    {isDepthOpen ? 'إخفاء الإعدادات 🔼' : 'تغيير المستوى ⚙️🔽'}
+                                </span>
+                            </button>
 
-                            {/* Dynamically styled descriptive banner for the active mode */}
-                            <div className={`transition-all duration-300 rounded-xl px-4 py-2 border text-[11px] leading-relaxed text-right ${
-                                depth === 'father' 
-                                    ? 'bg-sky-950/20 text-sky-200/90 border-sky-500/20' 
-                                    : depth === 'kids'
-                                    ? 'bg-amber-950/20 text-amber-200/90 border-amber-500/20'
-                                    : 'bg-emerald-950/20 text-emerald-200/90 border-emerald-500/20'
-                            }`}>
-                                {depth === 'father' && (
-                                    <span>💡 **خازن الآباء**: ردود أكاديمية كاملة مع مراجع من كتابات القديس أثناسيوس، كيرلس الكبير، وذهبي الفم، والصلوات الليتورجية والمصطلحات اليونانية للتأصيل.</span>
-                                )}
-                                {depth === 'kids' && (
-                                    <span>💡 **التعليمي (مبسط)**: ردود وافية لمدارس الأحد والخدام تناسب الصغار بسرد قصصي وتشبيهات محسوسة قريبة للتوضيح مع حماية العمق.</span>
-                                )}
-                                {depth === 'apologetics' && (
-                                    <span>💡 **مدافع الإيمان**: ردود عقلانية رصينة ومحبة لتفنيد وحل الشكوك المعاصرة بأدلة علمية وتاريخية ومنهجية وتأصيل فكري مسيحي عميق.</span>
-                                )}
-                            </div>
+                            {isDepthOpen && (
+                                <div className="flex flex-col gap-2 mt-1 animate-fade-in">
+                                    <div className="flex flex-wrap items-center justify-start gap-1.5 select-none text-right">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDepth('father')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
+                                                depth === 'father'
+                                                    ? 'bg-sky-500/15 text-sky-400 border-sky-500/40 shadow-[0_0_15px_rgba(14,165,233,0.15)] scale-[1.02]'
+                                                    : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>☦️ خازن الآباء (عميق وموثق)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDepth('kids')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
+                                                depth === 'kids'
+                                                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)] scale-[1.02]'
+                                                    : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>👶 التعليمي (مبسط للأطفال)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDepth('apologetics')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border cursor-pointer active:scale-95 ${
+                                                depth === 'apologetics'
+                                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)] scale-[1.02]'
+                                                    : 'text-slate-400 hover:text-slate-200 bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>🛡️ مدافع الإيمان (دفاعي وعملي)</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Dynamically styled descriptive banner for the active mode */}
+                                    <div className={`transition-all duration-300 rounded-xl px-4 py-2 border text-[11px] leading-relaxed text-right ${
+                                        depth === 'father' 
+                                            ? 'bg-sky-950/20 text-sky-200/90 border-sky-500/20' 
+                                            : depth === 'kids'
+                                            ? 'bg-amber-950/20 text-amber-200/90 border-amber-500/20'
+                                            : 'bg-emerald-950/20 text-emerald-200/90 border-emerald-500/20'
+                                    }`}>
+                                        {depth === 'father' && (
+                                            <span>💡 **خازن الآباء**: ردود أكاديمية كاملة مع مراجع من كتابات القديس أثناسيوس، كيرلس الكبير، وذهبي الفم، والصلوات الليتورجية والمصطلحات اليونانية للتأصيل.</span>
+                                        )}
+                                        {depth === 'kids' && (
+                                            <span>💡 **التعليمي (مبسط)**: ردود وافية لمدارس الأحد والخدام تناسب الصغار بسرد قصصي وتشبيهات محسوسة قريبة للتوضيح مع حماية العمق.</span>
+                                        )}
+                                        {depth === 'apologetics' && (
+                                            <span>💡 **مدافع الإيمان**: ردود عقلانية رصينة ومحبة لتفنيد وحل الشكوك المعاصرة بأدلة علمية وتاريخية ومنهجية وتأصيل فكري مسيحي عميق.</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div id="tour-patristic-input-container" className="relative bg-[#1e293b]/60 border border-white/10 rounded-2xl shadow-2xl p-2 flex items-end gap-2 transition-all focus-within:border-sky-500/50 focus-within:bg-[#1e293b]/80 focus-within:shadow-[0_0_20px_rgba(14,165,233,0.1)]">
